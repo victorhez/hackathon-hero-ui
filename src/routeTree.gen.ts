@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppScoreRouteImport } from './routes/app.score'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,18 +41,25 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppScoreRoute = AppScoreRouteImport.update({
+  id: '/score',
+  path: '/score',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/connect': typeof ConnectRoute
   '/verify': typeof VerifyRoute
+  '/app/score': typeof AppScoreRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/connect': typeof ConnectRoute
   '/verify': typeof VerifyRoute
+  '/app/score': typeof AppScoreRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -60,14 +68,16 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/connect': typeof ConnectRoute
   '/verify': typeof VerifyRoute
+  '/app/score': typeof AppScoreRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/connect' | '/verify' | '/app/'
+  fullPaths: '/' | '/app' | '/connect' | '/verify' | '/app/score' | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/connect' | '/verify' | '/app'
-  id: '__root__' | '/' | '/app' | '/connect' | '/verify' | '/app/'
+  to: '/' | '/connect' | '/verify' | '/app/score' | '/app'
+  id:
+    '__root__' | '/' | '/app' | '/connect' | '/verify' | '/app/score' | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -114,14 +124,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/score': {
+      id: '/app/score'
+      path: '/score'
+      fullPath: '/app/score'
+      preLoaderRoute: typeof AppScoreRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppScoreRoute: typeof AppScoreRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppScoreRoute: AppScoreRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
