@@ -21,11 +21,11 @@ function AppLayout() {
   }, [hydrated, state.cvi.verified, state.cvi.lastCheckedAt, recheckCvi]);
 
   useEffect(() => {
-    if (gated) {
-      const t = setTimeout(() => navigate({ to: "/connect" }), 2200);
-      return () => clearTimeout(t);
-    }
+    if (!gated) return undefined;
+    const t = setTimeout(() => navigate({ to: "/connect" }), 2200);
+    return () => clearTimeout(t);
   }, [gated, navigate]);
+
 
   if (!hydrated) {
     return (
