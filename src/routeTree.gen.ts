@@ -18,6 +18,7 @@ import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppBorrowRouteImport } from './routes/app.borrow'
 import { Route as AppLendRouteImport } from './routes/app.lend'
 import { Route as AppLoansRouteImport } from './routes/app.loans'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppScoreRouteImport } from './routes/app.score'
 
 const IndexRoute = IndexRouteImport.update({
@@ -65,6 +66,11 @@ const AppLoansRoute = AppLoansRouteImport.update({
   path: '/loans',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppScoreRoute = AppScoreRouteImport.update({
   id: '/score',
   path: '/score',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/app/borrow': typeof AppBorrowRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/score': typeof AppScoreRoute
   '/app/': typeof AppIndexRoute
 }
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/app/borrow': typeof AppBorrowRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/score': typeof AppScoreRoute
   '/app': typeof AppIndexRoute
 }
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/app/borrow': typeof AppBorrowRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
+  '/app/notifications': typeof AppNotificationsRoute
   '/app/score': typeof AppScoreRoute
   '/app/': typeof AppIndexRoute
 }
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/app/borrow'
     | '/app/lend'
     | '/app/loans'
+    | '/app/notifications'
     | '/app/score'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/app/borrow'
     | '/app/lend'
     | '/app/loans'
+    | '/app/notifications'
     | '/app/score'
     | '/app'
   id:
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/app/borrow'
     | '/app/lend'
     | '/app/loans'
+    | '/app/notifications'
     | '/app/score'
     | '/app/'
   fileRoutesById: FileRoutesById
@@ -217,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLoansRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/score': {
       id: '/app/score'
       path: '/score'
@@ -232,6 +251,7 @@ interface AppRouteChildren {
   AppBorrowRoute: typeof AppBorrowRoute
   AppLendRoute: typeof AppLendRoute
   AppLoansRoute: typeof AppLoansRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppScoreRoute: typeof AppScoreRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -241,6 +261,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppBorrowRoute: AppBorrowRoute,
   AppLendRoute: AppLendRoute,
   AppLoansRoute: AppLoansRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppScoreRoute: AppScoreRoute,
   AppIndexRoute: AppIndexRoute,
 }
