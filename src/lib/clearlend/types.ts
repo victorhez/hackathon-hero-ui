@@ -71,12 +71,12 @@ export const TIERS: Tier[] = [
 ];
 
 export function tierForScore(score: number): Tier {
-  return TIERS.find((t) => score >= t.min && score <= t.max) ?? TIERS[TIERS.length - 1];
+  return TIERS.find((t) => score >= t.min && score <= t.max) ?? TIERS[TIERS.length - 1]!;
 }
 
 export function nextTier(score: number): Tier | null {
   const idx = TIERS.findIndex((t) => t.name === tierForScore(score).name);
-  return idx > 0 ? TIERS[idx - 1] : null;
+  return idx > 0 ? TIERS[idx - 1]! : null;
 }
 
 export type ScoreDimension = {
