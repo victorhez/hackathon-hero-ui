@@ -20,6 +20,7 @@ import { Route as AppLendRouteImport } from './routes/app.lend'
 import { Route as AppLoansRouteImport } from './routes/app.loans'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
 import { Route as AppScoreRouteImport } from './routes/app.score'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +77,11 @@ const AppScoreRoute = AppScoreRouteImport.update({
   path: '/score',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/score': typeof AppScoreRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/score': typeof AppScoreRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/score': typeof AppScoreRoute
+  '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/app/loans'
     | '/app/notifications'
     | '/app/score'
+    | '/app/settings'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/app/loans'
     | '/app/notifications'
     | '/app/score'
+    | '/app/settings'
     | '/app'
   id:
     | '__root__'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/app/loans'
     | '/app/notifications'
     | '/app/score'
+    | '/app/settings'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -243,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppScoreRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -253,6 +272,7 @@ interface AppRouteChildren {
   AppLoansRoute: typeof AppLoansRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppScoreRoute: typeof AppScoreRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -263,6 +283,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLoansRoute: AppLoansRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppScoreRoute: AppScoreRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
