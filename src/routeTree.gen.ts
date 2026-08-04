@@ -10,33 +10,170 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAuditRouteImport } from './routes/app.audit'
+import { Route as AppBorrowRouteImport } from './routes/app.borrow'
+import { Route as AppLendRouteImport } from './routes/app.lend'
+import { Route as AppLoansRouteImport } from './routes/app.loans'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
+import { Route as AppScoreRouteImport } from './routes/app.score'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAuditRoute = AppAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBorrowRoute = AppBorrowRouteImport.update({
+  id: '/borrow',
+  path: '/borrow',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLendRoute = AppLendRouteImport.update({
+  id: '/lend',
+  path: '/lend',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLoansRoute = AppLoansRouteImport.update({
+  id: '/loans',
+  path: '/loans',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppScoreRoute = AppScoreRouteImport.update({
+  id: '/score',
+  path: '/score',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/connect': typeof ConnectRoute
+  '/verify': typeof VerifyRoute
+  '/app/audit': typeof AppAuditRoute
+  '/app/borrow': typeof AppBorrowRoute
+  '/app/lend': typeof AppLendRoute
+  '/app/loans': typeof AppLoansRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/score': typeof AppScoreRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
+  '/verify': typeof VerifyRoute
+  '/app/audit': typeof AppAuditRoute
+  '/app/borrow': typeof AppBorrowRoute
+  '/app/lend': typeof AppLendRoute
+  '/app/loans': typeof AppLoansRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/score': typeof AppScoreRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/connect': typeof ConnectRoute
+  '/verify': typeof VerifyRoute
+  '/app/audit': typeof AppAuditRoute
+  '/app/borrow': typeof AppBorrowRoute
+  '/app/lend': typeof AppLendRoute
+  '/app/loans': typeof AppLoansRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/score': typeof AppScoreRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/connect'
+    | '/verify'
+    | '/app/audit'
+    | '/app/borrow'
+    | '/app/lend'
+    | '/app/loans'
+    | '/app/notifications'
+    | '/app/score'
+    | '/app/settings'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/connect'
+    | '/verify'
+    | '/app/audit'
+    | '/app/borrow'
+    | '/app/lend'
+    | '/app/loans'
+    | '/app/notifications'
+    | '/app/score'
+    | '/app/settings'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/connect'
+    | '/verify'
+    | '/app/audit'
+    | '/app/borrow'
+    | '/app/lend'
+    | '/app/loans'
+    | '/app/notifications'
+    | '/app/score'
+    | '/app/settings'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  ConnectRoute: typeof ConnectRoute
+  VerifyRoute: typeof VerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +185,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/audit': {
+      id: '/app/audit'
+      path: '/audit'
+      fullPath: '/app/audit'
+      preLoaderRoute: typeof AppAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/borrow': {
+      id: '/app/borrow'
+      path: '/borrow'
+      fullPath: '/app/borrow'
+      preLoaderRoute: typeof AppBorrowRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/lend': {
+      id: '/app/lend'
+      path: '/lend'
+      fullPath: '/app/lend'
+      preLoaderRoute: typeof AppLendRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/loans': {
+      id: '/app/loans'
+      path: '/loans'
+      fullPath: '/app/loans'
+      preLoaderRoute: typeof AppLoansRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/score': {
+      id: '/app/score'
+      path: '/score'
+      fullPath: '/app/score'
+      preLoaderRoute: typeof AppScoreRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAuditRoute: typeof AppAuditRoute
+  AppBorrowRoute: typeof AppBorrowRoute
+  AppLendRoute: typeof AppLendRoute
+  AppLoansRoute: typeof AppLoansRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppScoreRoute: typeof AppScoreRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAuditRoute: AppAuditRoute,
+  AppBorrowRoute: AppBorrowRoute,
+  AppLendRoute: AppLendRoute,
+  AppLoansRoute: AppLoansRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppScoreRoute: AppScoreRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  ConnectRoute: ConnectRoute,
+  VerifyRoute: VerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
