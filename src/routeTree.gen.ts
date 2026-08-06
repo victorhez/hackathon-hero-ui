@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppBorrowRouteImport } from './routes/app.borrow'
 import { Route as AppLeaderboardRouteImport } from './routes/app.leaderboard'
@@ -46,6 +47,11 @@ const VerifyRoute = VerifyRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAuditRoute = AppAuditRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/connect': typeof ConnectRoute
   '/verify': typeof VerifyRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
   '/app/leaderboard': typeof AppLeaderboardRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/connect': typeof ConnectRoute
   '/verify': typeof VerifyRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
   '/app/leaderboard': typeof AppLeaderboardRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/connect': typeof ConnectRoute
   '/verify': typeof VerifyRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
   '/app/leaderboard': typeof AppLeaderboardRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/connect'
     | '/verify'
+    | '/app/analytics'
     | '/app/audit'
     | '/app/borrow'
     | '/app/leaderboard'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/'
     | '/connect'
     | '/verify'
+    | '/app/analytics'
     | '/app/audit'
     | '/app/borrow'
     | '/app/leaderboard'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/connect'
     | '/verify'
+    | '/app/analytics'
     | '/app/audit'
     | '/app/borrow'
     | '/app/leaderboard'
@@ -223,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/analytics': {
+      id: '/app/analytics'
+      path: '/analytics'
+      fullPath: '/app/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/audit': {
@@ -285,6 +304,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppBorrowRoute: typeof AppBorrowRoute
   AppLeaderboardRoute: typeof AppLeaderboardRoute
@@ -297,6 +317,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAnalyticsRoute: AppAnalyticsRoute,
   AppAuditRoute: AppAuditRoute,
   AppBorrowRoute: AppBorrowRoute,
   AppLeaderboardRoute: AppLeaderboardRoute,
