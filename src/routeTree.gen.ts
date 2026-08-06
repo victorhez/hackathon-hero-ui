@@ -12,10 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppBorrowRouteImport } from './routes/app.borrow'
+import { Route as AppLeaderboardRouteImport } from './routes/app.leaderboard'
 import { Route as AppLendRouteImport } from './routes/app.lend'
 import { Route as AppLoansRouteImport } from './routes/app.loans'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
@@ -37,6 +40,11 @@ const ConnectRoute = ConnectRouteImport.update({
   path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -47,6 +55,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAuditRoute = AppAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -55,6 +68,11 @@ const AppAuditRoute = AppAuditRouteImport.update({
 const AppBorrowRoute = AppBorrowRouteImport.update({
   id: '/borrow',
   path: '/borrow',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeaderboardRoute = AppLeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => AppRoute,
 } as any)
 const AppLendRoute = AppLendRouteImport.update({
@@ -87,9 +105,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/connect': typeof ConnectRoute
+  '/faq': typeof FaqRoute
   '/verify': typeof VerifyRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
+  '/app/leaderboard': typeof AppLeaderboardRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -100,9 +121,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/connect': typeof ConnectRoute
+  '/faq': typeof FaqRoute
   '/verify': typeof VerifyRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
+  '/app/leaderboard': typeof AppLeaderboardRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -115,9 +139,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/connect': typeof ConnectRoute
+  '/faq': typeof FaqRoute
   '/verify': typeof VerifyRoute
+  '/app/analytics': typeof AppAnalyticsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
+  '/app/leaderboard': typeof AppLeaderboardRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -131,9 +158,12 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/connect'
+    | '/faq'
     | '/verify'
+    | '/app/analytics'
     | '/app/audit'
     | '/app/borrow'
+    | '/app/leaderboard'
     | '/app/lend'
     | '/app/loans'
     | '/app/notifications'
@@ -144,9 +174,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/connect'
+    | '/faq'
     | '/verify'
+    | '/app/analytics'
     | '/app/audit'
     | '/app/borrow'
+    | '/app/leaderboard'
     | '/app/lend'
     | '/app/loans'
     | '/app/notifications'
@@ -158,9 +191,12 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/connect'
+    | '/faq'
     | '/verify'
+    | '/app/analytics'
     | '/app/audit'
     | '/app/borrow'
+    | '/app/leaderboard'
     | '/app/lend'
     | '/app/loans'
     | '/app/notifications'
@@ -173,6 +209,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   ConnectRoute: typeof ConnectRoute
+  FaqRoute: typeof FaqRoute
   VerifyRoute: typeof VerifyRoute
 }
 
@@ -199,6 +236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -213,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/analytics': {
+      id: '/app/analytics'
+      path: '/analytics'
+      fullPath: '/app/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/audit': {
       id: '/app/audit'
       path: '/audit'
@@ -225,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/borrow'
       fullPath: '/app/borrow'
       preLoaderRoute: typeof AppBorrowRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/leaderboard': {
+      id: '/app/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/app/leaderboard'
+      preLoaderRoute: typeof AppLeaderboardRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/lend': {
@@ -266,8 +324,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppBorrowRoute: typeof AppBorrowRoute
+  AppLeaderboardRoute: typeof AppLeaderboardRoute
   AppLendRoute: typeof AppLendRoute
   AppLoansRoute: typeof AppLoansRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -277,8 +337,10 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAnalyticsRoute: AppAnalyticsRoute,
   AppAuditRoute: AppAuditRoute,
   AppBorrowRoute: AppBorrowRoute,
+  AppLeaderboardRoute: AppLeaderboardRoute,
   AppLendRoute: AppLendRoute,
   AppLoansRoute: AppLoansRoute,
   AppNotificationsRoute: AppNotificationsRoute,
@@ -293,6 +355,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   ConnectRoute: ConnectRoute,
+  FaqRoute: FaqRoute,
   VerifyRoute: VerifyRoute,
 }
 export const routeTree = rootRouteImport

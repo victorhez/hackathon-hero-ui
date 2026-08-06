@@ -106,7 +106,11 @@ function Landing() {
             <a href="#compliance" className="transition-colors hover:text-foreground">
               Compliance
             </a>
+            <Link to="/faq" className="transition-colors hover:text-foreground">
+              FAQ
+            </Link>
           </nav>
+
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild className="hidden sm:inline-flex">
               <Link to="/connect">Sign in</Link>
