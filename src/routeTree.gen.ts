@@ -16,6 +16,7 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppBorrowRouteImport } from './routes/app.borrow'
+import { Route as AppLeaderboardRouteImport } from './routes/app.leaderboard'
 import { Route as AppLendRouteImport } from './routes/app.lend'
 import { Route as AppLoansRouteImport } from './routes/app.loans'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
@@ -57,6 +58,11 @@ const AppBorrowRoute = AppBorrowRouteImport.update({
   path: '/borrow',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLeaderboardRoute = AppLeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLendRoute = AppLendRouteImport.update({
   id: '/lend',
   path: '/lend',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
+  '/app/leaderboard': typeof AppLeaderboardRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
+  '/app/leaderboard': typeof AppLeaderboardRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/app/audit': typeof AppAuditRoute
   '/app/borrow': typeof AppBorrowRoute
+  '/app/leaderboard': typeof AppLeaderboardRoute
   '/app/lend': typeof AppLendRoute
   '/app/loans': typeof AppLoansRoute
   '/app/notifications': typeof AppNotificationsRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/app/audit'
     | '/app/borrow'
+    | '/app/leaderboard'
     | '/app/lend'
     | '/app/loans'
     | '/app/notifications'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/app/audit'
     | '/app/borrow'
+    | '/app/leaderboard'
     | '/app/lend'
     | '/app/loans'
     | '/app/notifications'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/app/audit'
     | '/app/borrow'
+    | '/app/leaderboard'
     | '/app/lend'
     | '/app/loans'
     | '/app/notifications'
@@ -227,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBorrowRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/leaderboard': {
+      id: '/app/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/app/leaderboard'
+      preLoaderRoute: typeof AppLeaderboardRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/lend': {
       id: '/app/lend'
       path: '/lend'
@@ -268,6 +287,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppBorrowRoute: typeof AppBorrowRoute
+  AppLeaderboardRoute: typeof AppLeaderboardRoute
   AppLendRoute: typeof AppLendRoute
   AppLoansRoute: typeof AppLoansRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -279,6 +299,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppBorrowRoute: AppBorrowRoute,
+  AppLeaderboardRoute: AppLeaderboardRoute,
   AppLendRoute: AppLendRoute,
   AppLoansRoute: AppLoansRoute,
   AppNotificationsRoute: AppNotificationsRoute,
@@ -298,13 +319,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
