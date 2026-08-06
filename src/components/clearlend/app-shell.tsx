@@ -11,6 +11,7 @@ import {
   Menu,
   ScrollText,
   Settings,
+  Trophy,
   Wallet,
   X,
 } from "lucide-react";
