@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowDownToLine,
   BadgeCheck,
+  BarChart3,
   Bell,
   Gauge,
   HandCoins,
