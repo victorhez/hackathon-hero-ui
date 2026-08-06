@@ -37,10 +37,13 @@ const nav = [
   { to: "/app/borrow", label: "Borrow", icon: HandCoins },
   { to: "/app/loans", label: "My Loans", icon: ArrowDownToLine },
   { to: "/app/lend", label: "Lend", icon: Wallet },
+  { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/app/leaderboard", label: "Leaderboard", icon: Trophy },
   { to: "/app/audit", label: "Audit Trail", icon: ScrollText },
   { to: "/app/notifications", label: "Notifications", icon: Bell },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
+
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { state, disconnect, setChain } = useClearLend();
