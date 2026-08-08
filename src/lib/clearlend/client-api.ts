@@ -8,7 +8,11 @@ import type {
 
 const API_BASE = "/api/cleanverse";
 
+const FETCH_TIMEOUT_MS = 6000;
+
 async function request<T>(path: string, init: RequestInit = {}, fallback: T): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       ...init,
@@ -17,6 +21,7 @@ async function request<T>(path: string, init: RequestInit = {}, fallback: T): Pr
         Accept: "application/json",
         ...(init.headers ?? {}),
       },
+      signal: init.signal ?? controller.signal,
     });
     if (!res.ok) {
       try {
@@ -29,8 +34,18 @@ async function request<T>(path: string, init: RequestInit = {}, fallback: T): Pr
     const json = (await res.json()) as T;
     return json ?? fallback;
   } catch (err) {
-    console.warn("[clearlend-api]", path, err);
+    if (err instanceof DOMException && err.name === "AbortError") {
+      console.warn(
+        "[clearlend-api]",
+        path,
+        `timed out after ${FETCH_TIMEOUT_MS}ms — using fallback`,
+      );
+    } else {
+      console.warn("[clearlend-api]", path, err);
+    }
     return fallback;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

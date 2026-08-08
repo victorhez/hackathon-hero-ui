@@ -259,8 +259,7 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
           parsed.balances !== null &&
           !Array.isArray(parsed.balances);
         const looksLikeDemoSeed =
-          typeof parsed.cvi?.passId === "string" &&
-          /^A-PASS-[0-9A-F]{6}$/.test(parsed.cvi.passId);
+          typeof parsed.cvi?.passId === "string" && /^A-PASS-[0-9A-F]{6}$/.test(parsed.cvi.passId);
         if (hasRequiredNestedArrays && !looksLikeDemoSeed) {
           setState({
             ...initialState,
@@ -444,12 +443,19 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
   const completeVerification = useCallback(
     async (level: "Bank-Verified" | "Institution" = "Bank-Verified") => {
       const now = Date.now();
-      setState((s) => ({
-        ...s,
-        connected: true,
-        address: s.address ?? randomHash().slice(0, 42),
-        provider: s.provider ?? "MetaMask",
-      }));
+      let currentAddr: string;
+      const fallbackAddr = randomHash().slice(0, 42);
+      const fallbackProvider: WalletProvider = "MetaMask";
+
+      setState((s) => {
+        currentAddr = s.address ?? fallbackAddr;
+        return {
+          ...s,
+          connected: true,
+          address: currentAddr,
+          provider: s.provider ?? fallbackProvider,
+        };
+      });
 
       toast.loading("Finalizing verification with Cleanverse…", { id: "verify-loading" });
 
@@ -457,16 +463,9 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       let apiBalance = 0;
 
       try {
-        const currentAddr = (await new Promise<string>((resolve) => {
-          setState((s) => {
-            resolve(s.address ?? randomHash().slice(0, 42));
-            return s;
-          });
-        }))!;
-
         const [scoreRes, balRes] = await Promise.all([
-          apiGetScore({ wallet: currentAddr }),
-          apiGetCvaBalances(currentAddr),
+          apiGetScore({ wallet: currentAddr! }),
+          apiGetCvaBalances(currentAddr!),
         ]);
 
         apiDims = scoreRes.dimensions ?? [];
@@ -482,8 +481,8 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
       setState((s) => {
         const base = newUserVerifiedProfile(
-          s.address ?? randomHash().slice(0, 42),
-          s.provider ?? "MetaMask",
+          currentAddr!,
+          s.provider ?? fallbackProvider,
           s.chain,
           level,
           apiDims,

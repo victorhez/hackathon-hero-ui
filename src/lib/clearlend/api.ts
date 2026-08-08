@@ -76,6 +76,8 @@ function authHeaders(env: CleanverseEnv): HeadersInit {
   };
 }
 
+const FETCH_TIMEOUT_MS = 7000;
+
 async function request<T>(
   env: CleanverseEnv,
   path: string,
@@ -85,6 +87,8 @@ async function request<T>(
   const hasCreds = env.apiId && env.apiKey;
   if (!hasCreds) return fallback;
   const url = `${env.baseUrl.replace(/\/$/, "")}${path}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       ...init,
@@ -92,6 +96,7 @@ async function request<T>(
         ...authHeaders(env),
         ...(init.headers ?? {}),
       },
+      signal: init.signal ?? controller.signal,
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
@@ -101,6 +106,8 @@ async function request<T>(
     return json ?? fallback;
   } catch {
     return fallback;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

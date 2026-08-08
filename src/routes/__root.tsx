@@ -39,7 +39,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    // eslint-disable-next-line no-console
     console.error("[App error boundary]", error);
   }, [error]);
 
