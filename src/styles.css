@@ -144,7 +144,8 @@
     transparent 100%
   );
   --shadow-glow: 0 18px 60px -18px color-mix(in oklab, var(--brand-2) 55%, transparent);
-  --shadow-card: 0 1px 0 0 color-mix(in oklab, oklch(1 0 0) 6%, transparent) inset,
+  --shadow-card:
+    0 1px 0 0 color-mix(in oklab, oklch(1 0 0) 6%, transparent) inset,
     0 20px 50px -30px oklch(0 0 0 / 0.8);
 }
 

@@ -63,21 +63,18 @@ function VerifyPage() {
   const [accountType, setAccountType] = useState<"Bank-Verified" | "Institution">("Bank-Verified");
   const [consent, setConsent] = useState(false);
 
-  const submitBank = () => {
+  const submitBank = async () => {
     setBusy(true);
-    setTimeout(() => {
-      setBusy(false);
-      setStep(2);
-    }, 1400);
+    await new Promise((r) => setTimeout(r, 1200));
+    setBusy(false);
+    setStep(2);
   };
 
-  const bindWallet = () => {
+  const bindWallet = async () => {
     setBusy(true);
-    setTimeout(() => {
-      completeVerification(accountType);
-      setBusy(false);
-      setStep(3);
-    }, 1600);
+    await completeVerification(accountType);
+    setBusy(false);
+    setStep(3);
   };
 
   return (
@@ -126,9 +123,9 @@ function VerifyPage() {
                 Verify once. Borrow better forever.
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                ClearLend is a members-only lending pool. Instead of asking you to over-collateralise
-                a loan, we ask you to prove you're a real, verified person — using a credential your
-                bank already issued.
+                ClearLend is a members-only lending pool. Instead of asking you to
+                over-collateralise a loan, we ask you to prove you're a real, verified person —
+                using a credential your bank already issued.
               </p>
               <div className="mt-6 space-y-3">
                 {[
@@ -168,8 +165,8 @@ function VerifyPage() {
             <>
               <h1 className="font-display text-2xl font-semibold">Bank credential</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Choose the institution that holds your verified identity. You'll approve the check in
-                their app.
+                Choose the institution that holds your verified identity. You'll approve the check
+                in their app.
               </p>
               <div className="mt-6 grid gap-4">
                 <div className="grid gap-2">
@@ -189,13 +186,18 @@ function VerifyPage() {
                         <SelectValue placeholder="Select country" />
                       </SelectTrigger>
                       <SelectContent>
-                        {["Nigeria", "United States", "United Kingdom", "Germany", "Singapore", "UAE"].map(
-                          (c) => (
-                            <SelectItem key={c} value={c}>
-                              {c}
-                            </SelectItem>
-                          ),
-                        )}
+                        {[
+                          "Nigeria",
+                          "United States",
+                          "United Kingdom",
+                          "Germany",
+                          "Singapore",
+                          "UAE",
+                        ].map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -252,8 +254,8 @@ function VerifyPage() {
                     onCheckedChange={(v) => setConsent(Boolean(v))}
                     className="mt-0.5"
                   />
-                  I authorise my institution to share a verification result with the compliance layer
-                  and to bind the resulting credential to my wallet.
+                  I authorise my institution to share a verification result with the compliance
+                  layer and to bind the resulting credential to my wallet.
                 </label>
               </div>
               <Button
@@ -273,8 +275,8 @@ function VerifyPage() {
             <>
               <h1 className="font-display text-2xl font-semibold">Bind your wallet</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Sign a message from your wallet to bind the verification result to this address. This
-                proves the pass and the wallet belong to the same person.
+                Sign a message from your wallet to bind the verification result to this address.
+                This proves the pass and the wallet belong to the same person.
               </p>
               <div className="mt-6 rounded-2xl border border-border bg-background/50 p-5 text-sm">
                 <div className="flex items-center justify-between">

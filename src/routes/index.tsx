@@ -262,7 +262,9 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
-              <h2 className="font-display text-3xl font-semibold">Compliance built into the rails</h2>
+              <h2 className="font-display text-3xl font-semibold">
+                Compliance built into the rails
+              </h2>
               <p className="mt-3 max-w-2xl text-muted-foreground">
                 Credentials are re-checked on every session and before every loan. Sanctions and
                 blacklist policy is enforced by the underlying policy engine, not by us.

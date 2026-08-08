@@ -26,7 +26,7 @@ export const Route = createFileRoute("/app/loans")({
   component: LoansPage,
 });
 
-function LoanCard({ loan, onRepay }: { loan: Loan; onRepay?: () => void }) {
+function LoanCard({ loan, onRepay }: { loan: Loan; onRepay?: () => Promise<void> | void }) {
   const late = loan.status === "active" && Date.now() > loan.dueAt;
   const elapsed = Math.min(
     100,
@@ -90,16 +90,22 @@ function LoanCard({ loan, onRepay }: { loan: Loan; onRepay?: () => void }) {
           </div>
           {late ? (
             <p className="mt-4 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-              <AlertTriangle className="size-4" /> Past due. A 5% penalty accrues and your collateral
-              is liquidated after the grace period.
+              <AlertTriangle className="size-4" /> Past due. A 5% penalty accrues and your
+              collateral is liquidated after the grace period.
             </p>
           ) : (
             <p className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-background/50 p-3 text-xs text-muted-foreground">
-              <ShieldCheck className="size-4 text-primary" /> Repaying on time adds roughly +8 points
-              to your Reputation Score.
+              <ShieldCheck className="size-4 text-primary" /> Repaying on time adds roughly +8
+              points to your Reputation Score.
             </p>
           )}
-          <Button variant="hero" className="mt-5 w-full" onClick={onRepay}>
+          <Button
+            variant="hero"
+            className="mt-5 w-full"
+            onClick={() => {
+              void onRepay?.();
+            }}
+          >
             Repay {usd(loan.totalDue, 2)} in A-Tokens
           </Button>
         </>

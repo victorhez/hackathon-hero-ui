@@ -15,7 +15,10 @@ export const Route = createFileRoute("/app/audit")({
           "Every deposit, borrow, repayment and withdrawal emits an on-chain proof you can inspect.",
       },
       { property: "og:title", content: "Audit trail — ClearLend" },
-      { property: "og:description", content: "Fully auditable, Travel Rule-compliant loan events." },
+      {
+        property: "og:description",
+        content: "Fully auditable, Travel Rule-compliant loan events.",
+      },
     ],
   }),
   component: AuditPage,

@@ -180,3 +180,42 @@ export const POOL = {
 
 export const poolUtilisation = (extraDeposit = 0) =>
   (POOL.borrowed / (POOL.totalLiquidity + extraDeposit)) * 100;
+
+export type CviPassStatus = {
+  verified: boolean;
+  passId: string | null;
+  issuedAt: number | null;
+  expiresAt: number | null;
+  level: "Bank-Verified" | "Institution" | null;
+  wallet: string | null;
+  country: string | null;
+  lastCheckedAt: number;
+};
+
+export type CvaTransaction = {
+  id: string;
+  asset: string;
+  amount: number;
+  direction: "in" | "out";
+  counterparty: string;
+  block: number;
+  at: number;
+  clean: boolean;
+  proofHash: string;
+  chain: string;
+};
+
+export type CvaBalance = {
+  asset: string;
+  amount: number;
+  lastUpdatedAt: number;
+};
+
+export type CvaTransferResult = {
+  proofHash: string;
+  txHash: string;
+  amount: number;
+  asset: string;
+  at: number;
+  travelRuleAttached: boolean;
+};

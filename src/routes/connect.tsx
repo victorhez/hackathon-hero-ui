@@ -45,19 +45,19 @@ function ConnectPage() {
     if (state.connected && state.cvi.verified) navigate({ to: "/app" });
   }, [state.connected, state.cvi.verified, navigate]);
 
-  const handleConnect = (provider: WalletProvider, verified: boolean) => {
+  const handleConnect = async (provider: WalletProvider, verified: boolean) => {
     setPending(provider);
     setPhase("connecting");
-    connect(provider);
-    setTimeout(() => setPhase("checking"), 900);
-    setTimeout(() => {
-      if (verified) {
-        loadDemoProfile();
-        navigate({ to: "/app" });
-      } else {
-        setPhase("denied");
-      }
-    }, 2000);
+    const result = await connect(provider);
+    setPhase("checking");
+    await new Promise((r) => setTimeout(r, 700));
+    const apiVerified = result.verified;
+    if (verified) {
+      if (!apiVerified) loadDemoProfile();
+      navigate({ to: "/app" });
+    } else {
+      setPhase("denied");
+    }
   };
 
   return (

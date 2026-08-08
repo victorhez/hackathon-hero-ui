@@ -22,7 +22,10 @@ export const Route = createFileRoute("/app/lend")({
           "Supply verified A-Tokens to a compliance-gated lending pool and earn yield paid pro-rata from borrower interest.",
       },
       { property: "og:title", content: "Lend & earn — ClearLend" },
-      { property: "og:description", content: "Compliant, traceable yield from verified borrowers." },
+      {
+        property: "og:description",
+        content: "Compliant, traceable yield from verified borrowers.",
+      },
     ],
   }),
   component: LendPage,
@@ -99,10 +102,10 @@ function LendPage() {
                   variant="hero"
                   size="lg"
                   className="w-full"
-                  disabled={
-                    depositAmount < POOL.minDeposit || depositAmount > state.balances.aUSDC
-                  }
-                  onClick={() => deposit(depositAmount)}
+                  disabled={depositAmount < POOL.minDeposit || depositAmount > state.balances.aUSDC}
+                  onClick={() => {
+                    void deposit(depositAmount);
+                  }}
                 >
                   Deposit {usd(depositAmount)} into pool
                 </Button>
@@ -128,7 +131,9 @@ function LendPage() {
                   size="lg"
                   className="w-full"
                   disabled={withdrawAmount <= 0 || withdrawAmount > available}
-                  onClick={() => withdraw(withdrawAmount)}
+                  onClick={() => {
+                    void withdraw(withdrawAmount);
+                  }}
                 >
                   Withdraw {usd(withdrawAmount)}
                 </Button>

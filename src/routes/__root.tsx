@@ -10,10 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ClearLendProvider } from "../lib/clearlend/store";
 import { Toaster } from "../components/ui/sonner";
-
 
 function NotFoundComponent() {
   return (
@@ -41,7 +39,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    // eslint-disable-next-line no-console
+    console.error("[App error boundary]", error);
   }, [error]);
 
   return (
@@ -81,13 +80,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "ClearLend — Identity-Powered DeFi Lending" },
-      { name: "description", content: "Borrow with less collateral by proving who you are." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "ClearLend" },
-      { property: "og:description", content: "Identity-powered DeFi lending." },
+      {
+        name: "description",
+        content:
+          "Borrow with less collateral by proving who you are. Identity-gated lending pool with A-Pass verification.",
+      },
+      { name: "author", content: "ClearLend" },
+      { property: "og:title", content: "ClearLend — Identity-Powered DeFi Lending" },
+      {
+        property: "og:description",
+        content:
+          "A gated lending pool where your verified identity lowers collateral and unlocks better rates.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -129,11 +135,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ClearLendProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <Toaster />
       </ClearLendProvider>
     </QueryClientProvider>
   );
 }
-

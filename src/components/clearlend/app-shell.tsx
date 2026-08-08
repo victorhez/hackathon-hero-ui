@@ -27,7 +27,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useClearLend } from "@/lib/clearlend/store";
 import { shortAddr, tokens } from "@/lib/clearlend/format";
 import { CHAINS, tierForScore } from "@/lib/clearlend/types";
@@ -45,7 +51,6 @@ const nav = [
   { to: "/app/notifications", label: "Notifications", icon: Bell },
   { to: "/app/settings", label: "Settings", icon: Settings },
 ];
-
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { state, disconnect, setChain } = useClearLend();

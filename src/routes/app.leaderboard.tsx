@@ -29,7 +29,12 @@ export const Route = createFileRoute("/app/leaderboard")({
 });
 
 const PEERS = [
-  { address: "0x7fA2c91b3D5e84Aa0917bE4491cC7D2b6a1F0e33", score: 97, repaid: 41, volume: 1_240_000 },
+  {
+    address: "0x7fA2c91b3D5e84Aa0917bE4491cC7D2b6a1F0e33",
+    score: 97,
+    repaid: 41,
+    volume: 1_240_000,
+  },
   { address: "0x2b91Fe07dA4c5188b3aE0d7719cC26aB44f9E102", score: 93, repaid: 33, volume: 890_400 },
   { address: "0xC401aB93e7f2D8140b5eA9C6712dd4471E80B5aa", score: 90, repaid: 28, volume: 615_200 },
   { address: "0x9Ad3e5710bC4f28e19a0dD6634bF11c8a2E7d940", score: 86, repaid: 22, volume: 402_800 },
@@ -108,9 +113,7 @@ function LeaderboardPage() {
               <span className="w-24 text-right text-sm text-muted-foreground">
                 {r.repaid} repaid
               </span>
-              <span className="w-28 text-right text-sm text-muted-foreground">
-                {usd(r.volume)}
-              </span>
+              <span className="w-28 text-right text-sm text-muted-foreground">{usd(r.volume)}</span>
               <span className="font-display w-12 text-right text-sm font-semibold tabular-nums">
                 {r.score}
               </span>

@@ -26,7 +26,6 @@ function AppLayout() {
     return () => clearTimeout(t);
   }, [gated, navigate]);
 
-
   if (!hydrated) {
     return (
       <div className="grid min-h-screen place-items-center">

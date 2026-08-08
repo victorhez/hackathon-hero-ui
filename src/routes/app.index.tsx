@@ -43,9 +43,7 @@ function Dashboard() {
   const activeLoans = state.loans.filter((l) => l.status === "active");
   const outstanding = activeLoans.reduce((a, l) => a + l.totalDue, 0);
   const isNew = state.loans.length === 0 && state.lender.deposited === 0;
-  const progressToNext = next
-    ? ((state.score - tier.min) / (next.min - tier.min)) * 100
-    : 100;
+  const progressToNext = next ? ((state.score - tier.min) / (next.min - tier.min)) * 100 : 100;
 
   return (
     <>
@@ -57,7 +55,12 @@ function Dashboard() {
             : "Everything about your identity-backed credit in one place."
         }
         action={
-          <Button variant="outline" onClick={recheckCvi}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void recheckCvi();
+            }}
+          >
             <RefreshCw className="size-4" /> Re-verify A-Pass
           </Button>
         }
@@ -71,9 +74,7 @@ function Dashboard() {
           <div className="mt-6 w-full space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{next ? `Progress to ${next.name}` : "Top tier reached"}</span>
-              <span>
-                {next ? `${state.score}/${next.min}` : `${state.score}/100`}
-              </span>
+              <span>{next ? `${state.score}/${next.min}` : `${state.score}/100`}</span>
             </div>
             <Progress value={Math.max(2, Math.min(100, progressToNext))} />
             <p className="text-xs text-muted-foreground">
@@ -120,7 +121,10 @@ function Dashboard() {
                   sub: tier.rateLabel,
                 },
               ].map((s) => (
-                <div key={s.label} className="rounded-2xl border border-border bg-background/50 p-4">
+                <div
+                  key={s.label}
+                  className="rounded-2xl border border-border bg-background/50 p-4"
+                >
                   <s.icon className="size-4 text-primary" />
                   <p className="mt-3 text-xs text-muted-foreground">{s.label}</p>
                   <p className="font-display text-xl font-semibold">{s.value}</p>
@@ -145,17 +149,15 @@ function Dashboard() {
               <Wallet className="size-4 text-primary" />
               <p className="mt-3 text-xs text-muted-foreground">Wallet balance</p>
               <p className="font-display text-2xl font-semibold">{tokens(state.balances.aUSDC)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Verified assets on {state.chain}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Verified assets on {state.chain}</p>
             </Card>
             <Card className="surface-card p-6">
               <PiggyBank className="size-4 text-primary" />
               <p className="mt-3 text-xs text-muted-foreground">Supplied to pool</p>
-              <p className="font-display text-2xl font-semibold">{tokens(state.lender.deposited)}</p>
-              <p className="mt-1 text-xs text-success">
-                +{tokens(state.lender.earned, 4)} earned
+              <p className="font-display text-2xl font-semibold">
+                {tokens(state.lender.deposited)}
               </p>
+              <p className="mt-1 text-xs text-success">+{tokens(state.lender.earned, 4)} earned</p>
             </Card>
           </div>
         </div>

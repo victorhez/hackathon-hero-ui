@@ -1,13 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  AlertTriangle,
-  ArrowRight,
-  Check,
-  Lock,
-  ShieldCheck,
-  Sparkle,
-  Wallet,
-} from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Lock, ShieldCheck, Sparkle, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/clearlend/app-shell";
 import { TierBadge } from "@/components/clearlend/tier-badge";
@@ -74,8 +66,8 @@ function BorrowPage() {
   const overLimit = amount > tier.limit;
   const canBorrow = amount > 0 && !insufficient && !overLimit;
 
-  const submit = () => {
-    borrow({ amount, collateral: quote.collateral, termDays, apr: tier.apr });
+  const submit = async () => {
+    await borrow({ amount, collateral: quote.collateral, termDays, apr: tier.apr });
     setConfirmOpen(false);
     navigate({ to: "/app/loans" });
   };
@@ -117,7 +109,9 @@ function BorrowPage() {
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>$0</span>
-              <span>{tier.name} limit · {usd(tier.limit)}</span>
+              <span>
+                {tier.name} limit · {usd(tier.limit)}
+              </span>
             </div>
           </div>
 
@@ -159,14 +153,14 @@ function BorrowPage() {
 
           {overLimit && (
             <p className="mt-4 flex items-center gap-2 text-sm text-warning">
-              <AlertTriangle className="size-4" /> Above your {tier.name} limit of{" "}
-              {usd(tier.limit)}. Improve your score to unlock more.
+              <AlertTriangle className="size-4" /> Above your {tier.name} limit of {usd(tier.limit)}
+              . Improve your score to unlock more.
             </p>
           )}
           {insufficient && (
             <p className="mt-4 flex items-center gap-2 text-sm text-destructive">
-              <AlertTriangle className="size-4" /> You need {usd(quote.collateral, 2)} of A-Tokens as
-              collateral — balance is {tokens(state.balances.aUSDC)}.
+              <AlertTriangle className="size-4" /> You need {usd(quote.collateral, 2)} of A-Tokens
+              as collateral — balance is {tokens(state.balances.aUSDC)}.
             </p>
           )}
 
