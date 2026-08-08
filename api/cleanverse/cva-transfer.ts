@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getCleanverseEnv, submitCvaTransfer, validateWallet } from "../_lib/cleanverse-api";
+import { getCleanverseEnv, submitCvaTransfer, validateWallet } from "../_lib/cleanverse-api.js";
 
 const VALID_PURPOSES = [
   "loan_issue",

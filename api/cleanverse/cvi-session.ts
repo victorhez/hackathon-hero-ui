@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getCleanverseEnv, createCviSession, validateWallet } from "../_lib/cleanverse-api";
+import { getCleanverseEnv, createCviSession, validateWallet } from "../_lib/cleanverse-api.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

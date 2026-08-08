@@ -5,7 +5,7 @@ import {
   collectScoreInputs,
   validateWallet,
   deterministicWalletAgeDays,
-} from "../_lib/cleanverse-api";
+} from "../_lib/cleanverse-api.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST" && req.method !== "GET") {
