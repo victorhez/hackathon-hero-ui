@@ -292,11 +292,19 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* storage unavailable */
-    }
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      if (cancelled) return;
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch {
+        /* storage unavailable */
+      }
+    }, 80);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
   }, [state, hydrated]);
 
   const connect = useCallback(async (provider: WalletProvider) => {
@@ -442,20 +450,21 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
   const completeVerification = useCallback(
     async (level: "Bank-Verified" | "Institution" = "Bank-Verified") => {
-      const now = Date.now();
-      let currentAddr: string;
       const fallbackAddr = randomHash().slice(0, 42);
       const fallbackProvider: WalletProvider = "MetaMask";
+      const currentProvider = state.provider ?? fallbackProvider;
+      const currentChain = state.chain;
+      let currentAddr = state.address ?? fallbackAddr;
+      const needsAddress = !state.address;
 
-      setState((s) => {
-        currentAddr = s.address ?? fallbackAddr;
-        return {
-          ...s,
+      if (needsAddress) {
+        setState({
+          ...state,
           connected: true,
           address: currentAddr,
-          provider: s.provider ?? fallbackProvider,
-        };
-      });
+          provider: currentProvider,
+        });
+      }
 
       toast.loading("Finalizing verification with Cleanverse…", { id: "verify-loading" });
 
@@ -464,8 +473,8 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const [scoreRes, balRes] = await Promise.all([
-          apiGetScore({ wallet: currentAddr! }),
-          apiGetCvaBalances(currentAddr!),
+          apiGetScore({ wallet: currentAddr }),
+          apiGetCvaBalances(currentAddr),
         ]);
 
         apiDims = scoreRes.dimensions ?? [];
@@ -479,37 +488,38 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
       toast.dismiss("verify-loading");
 
-      setState((s) => {
+      setState((prev) => {
+        const addr = prev.address ?? currentAddr;
+        const prov = prev.provider ?? currentProvider;
+        const chain = prev.chain;
         const base = newUserVerifiedProfile(
-          currentAddr!,
-          s.provider ?? fallbackProvider,
-          s.chain,
+          addr,
+          prov,
+          chain,
           level,
           apiDims,
           apiBalance > 0 ? apiBalance : undefined,
         );
         return {
-          ...s,
+          ...prev,
           ...base,
-          audit: [...base.audit, ...s.audit.filter((a) => a.type !== "cvi_verified")],
+          audit: [...base.audit, ...prev.audit.filter((a) => a.type !== "cvi_verified")],
         };
       });
       toast.success("A-Pass verified", { description: "Welcome to ClearLend." });
     },
-    [],
+    [state.address, state.provider, state.chain],
   );
 
   const recheckCvi = useCallback(async () => {
     toast.loading("Re-verifying A-Pass on-chain…", { id: "recheck-cvi" });
     try {
-      const addr =
-        state.address ??
-        (() => {
-          const a = randomHash().slice(0, 42);
-          setState((s) => ({ ...s, address: a }));
-          return a;
-        })();
-      const cviResult = await apiCheckCvi(addr);
+      let addr = state.address;
+      if (!addr) {
+        addr = randomHash().slice(0, 42);
+        setState((s) => ({ ...s, address: addr! }));
+      }
+      const cviResult = await apiCheckCvi(addr!);
       setState((s) => ({
         ...s,
         cvi: {
@@ -541,22 +551,10 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
     async (input) => {
       const now = Date.now();
       const interest = (input.amount * (input.apr / 100) * input.termDays) / 365;
-      const loan: Loan = {
-        id: id(),
-        amount: input.amount,
-        collateral: input.collateral,
-        termDays: input.termDays,
-        apr: input.apr,
-        interest,
-        totalDue: input.amount + interest,
-        tier: tierForScore(0).name,
-        startedAt: now,
-        dueAt: now + input.termDays * DAY,
-        status: "active",
-        chain: "Base",
-      };
+      const loanId = id();
+      const dueAt = now + input.termDays * DAY;
 
-      toast.loading("Locking A-Token collateral…", { id: "borrow-" + loan.id });
+      toast.loading("Locking A-Token collateral…", { id: "borrow-" + loanId });
 
       try {
         const addr = state.address ?? randomHash().slice(0, 42);
@@ -568,7 +566,7 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
             amount: input.collateral,
             purpose: "collateral_lock",
             chain: state.chain,
-            reference: `loan-${loan.id}`,
+            reference: `loan-${loanId}`,
           }),
           apiSubmitCvaTransfer({
             from: POOL_WALLET,
@@ -577,18 +575,34 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
             amount: input.amount,
             purpose: "loan_issue",
             chain: state.chain,
-            reference: `loan-${loan.id}`,
+            reference: `loan-${loanId}`,
           }),
         ]);
       } catch (err) {
         console.warn("[borrow] CVA transfer submission skipped (demo fallback)", err);
       }
 
-      toast.dismiss("borrow-" + loan.id);
+      toast.dismiss("borrow-" + loanId);
+
+      const currentScore = state.score;
+      const currentChain = state.chain;
+      const tier = tierForScore(currentScore).name;
+      const loan: Loan = {
+        id: loanId,
+        amount: input.amount,
+        collateral: input.collateral,
+        termDays: input.termDays,
+        apr: input.apr,
+        interest,
+        totalDue: input.amount + interest,
+        tier,
+        startedAt: now,
+        dueAt,
+        status: "active",
+        chain: currentChain,
+      };
 
       setState((s) => {
-        loan.tier = tierForScore(s.score).name;
-        loan.chain = s.chain;
         return {
           ...s,
           balances: { aUSDC: s.balances.aUSDC + input.amount - input.collateral },
@@ -630,16 +644,12 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       toast.success("Loan issued", { description: "A-Token collateral locked on-chain." });
       return loan;
     },
-    [state.address, state.chain],
+    [state.address, state.chain, state.score],
   );
 
   const repay = useCallback<Ctx["repay"]>(
     async (loanId) => {
-      let currentLoan: Loan | undefined;
-      setState((s) => {
-        currentLoan = s.loans.find((l) => l.id === loanId);
-        return s;
-      });
+      const currentLoan = state.loans.find((l) => l.id === loanId);
       if (!currentLoan || currentLoan.status !== "active") return;
 
       toast.loading("Processing repayment…", { id: "repay-" + loanId });
@@ -745,7 +755,7 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       });
       toast.success("Loan repaid", { description: "Collateral released automatically." });
     },
-    [state.address, state.chain],
+    [state.address, state.chain, state.loans],
   );
 
   const deposit = useCallback<Ctx["deposit"]>(

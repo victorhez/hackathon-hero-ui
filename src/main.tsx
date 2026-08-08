@@ -88,9 +88,5 @@ declare global {
 const rootEl = document.getElementById("root")!;
 if (!window.__CLEARLEND_BOOTED__) {
   window.__CLEARLEND_BOOTED__ = true;
-  ReactDOM.createRoot(rootEl).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  );
+  ReactDOM.createRoot(rootEl).render(<App />);
 }
