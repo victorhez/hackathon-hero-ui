@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { apiCheckCvi, apiGetCvaBalances, apiGetScore, apiSubmitCvaTransfer } from "./client-api";
 
-const STORAGE_KEY = "clearlend.state.v1";
+const STORAGE_KEY = "clearlend.state.v2";
 const DAY = 86_400_000;
 
 const POOL_WALLET = "0x0000000000000000000000000000000000000001";
@@ -216,7 +216,6 @@ type Ctx = {
   connect: (provider: WalletProvider) => Promise<{ verified: boolean; address: string }>;
   disconnect: () => void;
   completeVerification: (level?: "Bank-Verified" | "Institution") => Promise<void>;
-  loadDemoProfile: () => void;
   recheckCvi: () => Promise<void>;
   setChain: (chain: string) => void;
   setRole: (role: "borrower" | "lender") => void;
@@ -242,9 +241,52 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setState({ ...initialState, ...(JSON.parse(raw) as ClearLendState) });
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<ClearLendState> & { _demo?: boolean };
+        const hasRequiredNestedArrays =
+          Array.isArray(parsed.loans) &&
+          Array.isArray(parsed.audit) &&
+          Array.isArray(parsed.notifications) &&
+          Array.isArray(parsed.dimensions) &&
+          Array.isArray(parsed.scoreHistory) &&
+          parsed.lender &&
+          typeof parsed.lender === "object" &&
+          !Array.isArray(parsed.lender) &&
+          typeof parsed.cvi === "object" &&
+          parsed.cvi !== null &&
+          !Array.isArray(parsed.cvi) &&
+          typeof parsed.balances === "object" &&
+          parsed.balances !== null &&
+          !Array.isArray(parsed.balances);
+        const looksLikeDemoSeed =
+          typeof parsed.cvi?.passId === "string" &&
+          /^A-PASS-[0-9A-F]{6}$/.test(parsed.cvi.passId);
+        if (hasRequiredNestedArrays && !looksLikeDemoSeed) {
+          setState({
+            ...initialState,
+            ...parsed,
+            cvi: { ...initialState.cvi, ...parsed.cvi },
+            balances: { ...initialState.balances, ...parsed.balances },
+            lender: { ...initialState.lender, ...parsed.lender },
+            dimensions:
+              parsed.dimensions && parsed.dimensions.length > 0
+                ? parsed.dimensions
+                : initialState.dimensions,
+            loans: parsed.loans ?? [],
+            audit: parsed.audit ?? [],
+            notifications: parsed.notifications ?? [],
+            scoreHistory: parsed.scoreHistory ?? [],
+          } as ClearLendState);
+        } else {
+          window.localStorage.removeItem(STORAGE_KEY);
+        }
+      }
     } catch {
-      /* ignore corrupt storage */
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
     }
     setHydrated(true);
   }, []);
@@ -457,15 +499,6 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
-
-  const loadDemoProfile = useCallback(() => {
-    setState((s) =>
-      verifiedProfile(s.address ?? randomHash().slice(0, 42), s.provider ?? "MetaMask", s.chain),
-    );
-    toast.success("Verified demo profile loaded", {
-      description: "Gold tier · A-Pass active",
-    });
-  }, []);
 
   const recheckCvi = useCallback(async () => {
     toast.loading("Re-verifying A-Pass on-chain…", { id: "recheck-cvi" });
@@ -855,7 +888,6 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       connect,
       disconnect,
       completeVerification,
-      loadDemoProfile,
       recheckCvi,
       setChain,
       setRole,
@@ -872,7 +904,6 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       connect,
       disconnect,
       completeVerification,
-      loadDemoProfile,
       recheckCvi,
       setChain,
       setRole,

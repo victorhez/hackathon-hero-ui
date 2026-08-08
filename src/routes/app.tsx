@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { Loader2, ShieldAlert } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/clearlend/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,14 +11,62 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppLayout() {
-  const { state, hydrated, recheckCvi } = useClearLend();
+  const { state, hydrated, recheckCvi, disconnect } = useClearLend();
   const navigate = useNavigate();
+  const [sessionChecked, setSessionChecked] = useState(false);
   const gated = hydrated && (!state.connected || !state.cvi.verified);
 
-  // CVI is re-verified on every session, not only at signup.
   useEffect(() => {
-    if (hydrated && state.cvi.verified && !state.cvi.lastCheckedAt) recheckCvi();
-  }, [hydrated, state.cvi.verified, state.cvi.lastCheckedAt, recheckCvi]);
+    if (!hydrated) return undefined;
+    if (!state.connected || !state.address) {
+      setSessionChecked(true);
+      return undefined;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        type EIP1193 = {
+          request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+        };
+        const w = window as unknown as {
+          ethereum?: EIP1193;
+        };
+        if (!w.ethereum) {
+          disconnect();
+          if (!cancelled) navigate({ to: "/connect" });
+          return;
+        }
+        const accounts = (await w.ethereum.request({
+          method: "eth_accounts",
+        })) as string[];
+        const found =
+          Array.isArray(accounts) &&
+          accounts.some(
+            (a) => typeof a === "string" && a.toLowerCase() === state.address?.toLowerCase(),
+          );
+        if (!found) {
+          disconnect();
+          if (!cancelled) navigate({ to: "/connect" });
+          return;
+        }
+      } catch {
+        /* ignore probe errors — keep session if wallet probe fails */
+      } finally {
+        if (!cancelled) setSessionChecked(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, state.connected, state.address, disconnect, navigate]);
+
+  useEffect(() => {
+    if (hydrated && sessionChecked && state.cvi.verified && !state.cvi.lastCheckedAt) {
+      void recheckCvi();
+    }
+  }, [hydrated, sessionChecked, state.cvi.verified, state.cvi.lastCheckedAt, recheckCvi]);
 
   useEffect(() => {
     if (!gated) return undefined;
@@ -26,7 +74,7 @@ function AppLayout() {
     return () => clearTimeout(t);
   }, [gated, navigate]);
 
-  if (!hydrated) {
+  if (!hydrated || !sessionChecked) {
     return (
       <div className="grid min-h-screen place-items-center">
         <Loader2 className="size-6 animate-spin text-primary" />
