@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, BadgeCheck, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Logo } from "@/components/clearlend/logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -36,27 +37,35 @@ const wallets: { name: WalletProvider; blurb: string }[] = [
 type Phase = "idle" | "connecting" | "checking" | "denied";
 
 function ConnectPage() {
-  const { state, connect, loadDemoProfile } = useClearLend();
+  const { state, connect } = useClearLend();
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("idle");
   const [pending, setPending] = useState<WalletProvider | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (state.connected && state.cvi.verified) navigate({ to: "/app" });
   }, [state.connected, state.cvi.verified, navigate]);
 
-  const handleConnect = async (provider: WalletProvider, verified: boolean) => {
+  const handleConnect = async (provider: WalletProvider) => {
     setPending(provider);
     setPhase("connecting");
-    const result = await connect(provider);
-    setPhase("checking");
-    await new Promise((r) => setTimeout(r, 700));
-    const apiVerified = result.verified;
-    if (verified) {
-      if (!apiVerified) loadDemoProfile();
-      navigate({ to: "/app" });
-    } else {
-      setPhase("denied");
+    setErrorMsg(null);
+    try {
+      const result = await connect(provider);
+      setPhase("checking");
+      await new Promise((r) => setTimeout(r, 500));
+      if (result.verified) {
+        navigate({ to: "/app" });
+      } else {
+        setPhase("denied");
+      }
+    } catch (err: unknown) {
+      setPhase("idle");
+      setPending(null);
+      const msg = err instanceof Error ? err.message : "Could not connect wallet";
+      setErrorMsg(msg);
+      toast.error(msg);
     }
   };
 
@@ -107,12 +116,18 @@ function ConnectPage() {
               We check for a valid A-Pass credential on every login — not just the first one.
             </p>
 
+            {errorMsg && (
+              <div className="mt-5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {errorMsg}
+              </div>
+            )}
+
             <div className="mt-6 space-y-3">
               {wallets.map((w) => (
                 <button
                   key={w.name}
                   disabled={phase !== "idle"}
-                  onClick={() => handleConnect(w.name, true)}
+                  onClick={() => handleConnect(w.name)}
                   className="flex w-full items-center gap-4 rounded-2xl border border-border bg-background/60 p-4 text-left transition-colors hover:border-primary/60 hover:bg-accent/50 disabled:opacity-60"
                 >
                   <span className="bg-gradient-brand grid size-10 shrink-0 place-items-center rounded-xl text-sm font-semibold text-primary-foreground">
@@ -139,30 +154,6 @@ function ConnectPage() {
                   : "Checking A-Pass credential on-chain…"}
               </div>
             )}
-
-            <div className="mt-6 rounded-xl border border-border bg-background/40 p-4">
-              <p className="flex items-center gap-2 text-xs font-medium text-success">
-                <BadgeCheck className="size-4" /> Judge / demo shortcuts
-              </p>
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                <Button
-                  variant="soft"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleConnect("MetaMask", true)}
-                >
-                  Verified wallet
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleConnect("MetaMask", false)}
-                >
-                  Unverified wallet
-                </Button>
-              </div>
-            </div>
 
             <p className="mt-6 text-center text-xs text-muted-foreground">
               New here?{" "}

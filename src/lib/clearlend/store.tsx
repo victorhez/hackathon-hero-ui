@@ -259,7 +259,75 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
   }, [state, hydrated]);
 
   const connect = useCallback(async (provider: WalletProvider) => {
-    const address = randomHash().slice(0, 42);
+    type EIP1193Provider = {
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      on?: (event: string, cb: (accounts: string[]) => void) => void;
+      removeListener?: (event: string, cb: (accounts: string[]) => void) => void;
+    };
+
+    const detectProvider = (): EIP1193Provider | null => {
+      if (typeof window === "undefined") return null;
+      const w = window as unknown as {
+        ethereum?: EIP1193Provider & { providers?: EIP1193Provider[] };
+      };
+      if (!w.ethereum) return null;
+      if (provider === "Coinbase Wallet" && w.ethereum.providers) {
+        const cb = w.ethereum.providers.find(
+          (p) => (p as unknown as { isCoinbaseWallet?: boolean }).isCoinbaseWallet,
+        );
+        if (cb) return cb;
+      }
+      return w.ethereum;
+    };
+
+    const eth = detectProvider();
+
+    let address: string;
+    if (provider === "WalletConnect") {
+      throw new Error(
+        "WalletConnect requires a projectId — please connect via MetaMask or Coinbase Wallet for this demo.",
+      );
+    }
+    if (!eth) {
+      const installUrl =
+        provider === "Coinbase Wallet"
+          ? "https://www.coinbase.com/wallet"
+          : "https://metamask.io/download/";
+      throw new Error(
+        `${provider} not detected. Install the ${provider} extension at ${installUrl} and refresh, or use a wallet-enabled browser.`,
+      );
+    }
+
+    try {
+      const accounts = (await eth.request({
+        method: "eth_requestAccounts",
+      })) as string[];
+      if (!accounts || accounts.length === 0 || !accounts[0]) {
+        throw new Error("No accounts returned from wallet. Please approve the connection request.");
+      }
+      address = String(accounts[0]).toLowerCase();
+    } catch (reqErr: unknown) {
+      const msg = reqErr instanceof Error ? reqErr.message : "Wallet connection rejected.";
+      if (msg.toLowerCase().includes("user rejected") || msg.toLowerCase().includes("denied")) {
+        throw new Error("Connection cancelled. Approve the wallet prompt to sign in.");
+      }
+      throw new Error(msg);
+    }
+
+    try {
+      await eth.request({
+        method: "personal_sign",
+        params: [
+          `0x${Buffer.from(
+            `ClearLend login · ${new Date().toISOString().slice(0, 10)} · ${address.slice(0, 8)}…${address.slice(-6)}`,
+          ).toString("hex")}`,
+          address,
+        ],
+      });
+    } catch {
+      /* signature is optional — proceed without it */
+    }
+
     setState((s) => ({
       ...s,
       connected: true,
@@ -291,7 +359,7 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
         const aUsdcBal =
           balanceResult.balances.find((b) => b.asset.toLowerCase().includes("usdc"))?.amount ??
           balanceResult.balances[0]?.amount ??
-          12_450;
+          0;
 
         setState((s) => ({
           ...s,
@@ -320,7 +388,7 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
         }));
       }
     } catch (err) {
-      console.warn("[connect] API fetch failed, falling back to local-only state", err);
+      console.warn("[connect] API fetch failed", err);
     }
 
     return { verified, address };
@@ -650,7 +718,8 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
   const deposit = useCallback<Ctx["deposit"]>(
     async (amount) => {
-      toast.loading("Depositing A-Tokens into the pool…", { id: "deposit-" + id() });
+      const toastId = "deposit-" + id();
+      toast.loading("Depositing A-Tokens into the pool…", { id: toastId });
       try {
         const addr = state.address ?? randomHash().slice(0, 42);
         await apiSubmitCvaTransfer({
@@ -664,7 +733,7 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.warn("[deposit] CVA transfer skipped (demo)", err);
       }
-      toast.dismiss("deposit-" + id());
+      toast.dismiss(toastId);
 
       setState((s) => {
         const now = Date.now();
@@ -708,7 +777,8 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
   const withdraw = useCallback<Ctx["withdraw"]>(
     async (amount) => {
-      toast.loading("Processing withdrawal…", { id: "withdraw-" + id() });
+      const toastId = "withdraw-" + id();
+      toast.loading("Processing withdrawal…", { id: toastId });
       try {
         const addr = state.address ?? randomHash().slice(0, 42);
         await apiSubmitCvaTransfer({
@@ -722,7 +792,7 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.warn("[withdraw] CVA transfer skipped (demo)", err);
       }
-      toast.dismiss("withdraw-" + id());
+      toast.dismiss(toastId);
 
       setState((s) => {
         const now = Date.now();
@@ -765,16 +835,16 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!state.lender.deposited) return;
+    if (!state.lender.deposited) return undefined;
     const t = setInterval(() => {
-      setState((s) => ({
-        ...s,
-        lender: {
-          ...s.lender,
-          earned: s.lender.earned + (s.lender.deposited * (POOL.lenderApy / 100)) / (365 * 24 * 60),
-        },
-      }));
-    }, 4000);
+      setState((s) => {
+        if (!s.lender.deposited) return s;
+        const earned =
+          s.lender.earned + (s.lender.deposited * (POOL.lenderApy / 100)) / (365 * 24 * 60);
+        if (Math.abs(earned - s.lender.earned) < 0.000001) return s;
+        return { ...s, lender: { ...s.lender, earned } };
+      });
+    }, 60_000);
     return () => clearInterval(t);
   }, [state.lender.deposited]);
 
