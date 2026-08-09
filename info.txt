@@ -1,0 +1,203 @@
+ClearLend
+Identity-Powered DeFi Lending on Cleanverse
+PRODUCT SPECIFICATION · CLEANVERSE HACKATHON 2026
+DeFi Track · Powered by CVI (A-Pass) + CVA (A-Token)
+1. Product Overview
+ClearLend is an identity-powered DeFi lending platform built on the Cleanverse compliance infrastructure. It uses
+Cleanverse Verified Identity (CVI / A-Pass) and Cleanverse Verified Assets (CVA / A-Token) to create a gated
+lending pool where verified users can borrow and lend with better terms than traditional over-collateralised DeFi —
+simply by proving who they are.
+The core innovation: in standard DeFi, you need to lock up more money than you borrow. ClearLend changes this
+by treating your verified identity and clean on-chain history as a financial signal — reducing how much collateral
+you need and unlocking better interest rates. The cleaner your identity and transaction history, the better your
+borrowing terms.
+Product Name ClearLend
+Type Identity-based DeFi lending platform (gated lending pool)
+Hackathon Cleanverse Hackathon 2026
+Track DeFi — Gated Lending Pools / Identity-Based Lending
+Compliance Layer Cleanverse CVI (A-Pass) + CVA (A-Token)
+Chains Supported Base, Monad, Ethereum, Arbitrum, BNB Chain
+Settlement Asset USDC / USDT (via Cleanverse A-Tokens)
+Open Source Yes — MIT or Apache 2.0 licence required
+2. The Problem Being Solved
+DeFi lending has a fundamental design flaw: it excludes the people who need it most. To borrow $1,000 in
+standard DeFi, you must lock up $1,500 first. This means only people who already have crypto wealth can
+participate — a system that reinforces inequality rather than opening access. Meanwhile, the real financial system
+uses identity and credit history to determine trustworthiness. DeFi ignores both.
+Root Causes Consequences
+• All DeFi loans require over-collateralisation (120%+) • Billions of people excluded from DeFi lending entirely
+• No way to reward trusted, verified users with better
+terms
+• Capital is locked unproductively as excess collateral
+• Anonymous wallets mean zero credit history or
+reputation
+• DeFi cannot scale to mainstream or institutional
+adoption
+• Institutions and regulated users cannot participate in
+unverified pools
+• Compliance gap: no Travel Rule enforcement on
+lending flows
+• Legitimate borrowers are treated the same as
+anonymous bad actors
+• No incentive for users to build or maintain on-chain
+reputation
+3. The Solution — How ClearLend Works
+ClearLend gates access to its lending pool using Cleanverse's CVI. Only bank-verified, A-Pass-holding users can
+enter. Once inside, the system reads their on-chain transaction history (via CVA / A-Token records) to compute a
+Reputation Score — and that score directly determines their borrowing tier, collateral requirements, and interest
+rate.
+Step 1 — Connect User connects their Web3 wallet to ClearLend. The platform checks for a valid CVI
+(A-Pass) credential issued by Cleanverse.
+Step 2 — Gate Check If CVI is present: user enters the platform. If not: they are directed to Cleanverse's
+one-time verification flow (bank credential + wallet binding) to obtain their A-Pass.
+Step 3 — Score ClearLend reads the user's CVA transaction history — the volume, frequency, and
+cleanliness of their A-Token transfers — and computes a Reputation Score (0–100).
+Step 4 — Tier The Reputation Score maps the user to a borrowing tier (Platinum, Gold, Silver, Bronze,
+or Unranked), which determines collateral ratio, borrowing limit, and interest rate.
+Step 5 — Borrow/Lend Borrowers select a loan amount within their tier limit, deposit the required collateral (in
+A-Tokens), and receive funds. Lenders deposit A-Tokens into the pool to earn yield.
+Step 6 — Repay Borrowers repay principal + interest over the loan term. On-time repayment improves
+their Reputation Score over time, unlocking better tiers.
+4. Reputation Score & Borrowing Tier System
+The Reputation Score is the heart of ClearLend. It is a number from 0 to 100 that reflects how trustworthy a verified
+user appears, based on their on-chain behaviour within the Cleanverse ecosystem. It is not a static number — it
+grows or shrinks based on the user's actions over time.
+Score Range Tier Collateral Required Borrowing Limit Interest Rate
+85 – 100 ■ Platinum 0% – 20% Up to $50,000 Lowest (Prime)
+65 – 84 ■ Gold 25% – 40% Up to $20,000 Competitive
+45 – 64 ■ Silver 50% – 70% Up to $10,000 Standard
+20 – 44 ■ Bronze 80% – 100% Up to $2,000 Higher
+0 – 19 ■ Unranked 120%+ Micro only Maximum
+New Cleanverse users start at a baseline score. Every on-time repayment, clean transfer, and active verified transaction adds
+points. Late repayments, defaults, or suspicious patterns reduce it.
+5. What ClearLend Analyses — The Four Score Dimensions
+1. CVI Verification Level Is the user's A-Pass valid and active? A freshly issued or recently renewed A-Pass
+scores higher. Expired or unverified credentials result in access denial until
+re-verified.
+2. CVA Transaction History How many A-Token (clean, compliant) transfers has this wallet made? Volume,
+consistency, and the duration of activity all feed into the score. Longer, cleaner history
+= higher score.
+3. Loan Repayment Record ClearLend's own internal record: has this user borrowed before? Did they repay on
+time? Every on-time repayment boosts the score. Defaults are heavily penalised.
+4. Wallet Age & Activity How long has this wallet been active on Cleanverse? An older, consistently active
+wallet demonstrates commitment to the ecosystem and scores more favourably than
+a brand-new wallet.
+6. Full Feature List
+6.1 Identity Gate & Onboarding
+• Wallet connection via MetaMask, WalletConnect, or Coinbase Wallet
+• Automatic CVI (A-Pass) check on login — unverified users are redirected to Cleanverse verification
+• One-time verification flow embedded or linked: user completes bank credential binding on Cleanverse, returns
+to ClearLend with A-Pass active
+• Clear onboarding screen explaining what CVI is and why it's required — in plain, non-technical language
+• First-time user welcome dashboard showing their starting Reputation Score and tier
+6.2 Reputation Score Dashboard
+• Visual score display (0–100) shown prominently on the user's home screen
+• Current tier badge: Platinum / Gold / Silver / Bronze / Unranked — colour-coded and clearly labelled
+• Score breakdown: shows the contribution of each of the four scoring dimensions
+• Score history chart: shows how the user's score has changed over time
+• Next tier progress bar: shows exactly what the user needs to do to reach the next tier
+• Plain-language tips: 'Repay your next loan on time to gain +8 points' — actionable, not abstract
+6.3 Borrowing Flow
+• Loan calculator: user inputs desired amount, sees collateral required and interest rate in real time based on
+their tier
+• Loan term selection: 7 days, 14 days, or 30 days
+• Collateral deposit in A-Tokens — compliant, traced, and locked in the smart contract for the loan term
+• Loan confirmation screen with full breakdown: amount, term, rate, collateral, total repayment
+• Active loan tracker: shows outstanding balance, time remaining, next repayment date, and penalty if late
+• One-click repayment button — user repays directly from their A-Token wallet
+• Automatic collateral release upon full repayment
+• Late payment warning notifications (in-app) before the due date
+6.4 Lending / Liquidity Pool
+• Lenders deposit A-Tokens into the ClearLend pool to earn yield
+• Real-time pool stats: total liquidity, current utilisation rate, APY for lenders
+• Lender dashboard: shows deposited amount, earned interest to date, and withdrawal option
+• Only CVI-verified wallets can deposit as lenders — maintaining the compliance gate on both sides
+• Yield distributed pro-rata from borrower interest payments
+• Minimum deposit: low barrier to encourage participation from small lenders
+6.5 Compliance & Cleanverse Integration
+• All transactions settled in CVA (A-Tokens) — ensuring Travel Rule compliance on every loan and repayment
+• CVI credential verified on every login and before every loan — not just at onboarding
+• On-chain proof generated for every loan event (issuance, repayment, default) — fully auditable
+• Sanctions and blacklist enforcement inherited from Cleanverse's on-chain policy engine
+• No anonymous wallets can access any part of the platform — zero exceptions
+• Audit log: every action (deposit, borrow, repay, withdraw) is logged and traceable on-chain
+6.6 Smart Contract Layer
+• Lending pool contract: holds lender deposits, disburses loans, collects repayments
+• Collateral vault contract: locks borrower collateral for the loan term, releases on repayment
+• Reputation oracle contract: reads CVI status and CVA history to compute and update scores
+• Liquidation logic: if a borrower defaults past the grace period, collateral is liquidated to cover lenders
+• All contracts open-source and auditable — required for hackathon submission
+• Deployed on testnet for hackathon demo; architecture supports mainnet deployment on any
+Cleanverse-integrated chain
+6.7 Notifications & User Alerts
+• In-app notifications: loan due in 48 hours, score changed, tier upgraded, repayment confirmed
+• Score milestone alerts: 'You've reached Gold tier — your next loan gets a lower rate'
+• Tier downgrade warning: 'Your score dropped — take action to avoid losing your tier'
+• Lender alerts: 'Your deposit has earned X USDC this week'
+7. Who Uses ClearLend
+User Type Who They Are What They Do on ClearLend
+Borrower CVI-verified individual needing short-term liquidity Borrows against lower collateral based on their Reputation Score
+Lender CVI-verified individual with idle stablecoins Deposits A-Tokens into the pool to earn compliant, traceable yield
+Institution Bank or licensed Web3 provider with Cleanverse access Participates in a fully compliant, auditable lending pool for the first time
+New User Someone just getting their CVI for the first timeStarts at Bronze tier, builds reputation through small loans and on-time repayments
+8. Cleanverse Technical Requirements
+The following Cleanverse components must be integrated for a valid hackathon submission. Both CVI and CVA
+must be actively used — not just referenced.
+CVI — Cleanverse Verified Identity (A-Pass)
+Gate all platform access behind a valid A-Pass check — no CVI, no entry
+Re-verify CVI status on each login session, not just at signup
+Display the user's verification status visibly on their dashboard
+Use A-Pass credential data as an input to the Reputation Score calculation
+Redirect unverified users to Cleanverse's one-time bank verification flow
+CVA — Cleanverse Verified Assets (A-Token)
+All loan disbursements, collateral deposits, repayments, and lender yields must settle in A-Tokens
+A-Token transaction history must be read to compute the CVA dimension of the Reputation Score
+No non-A-Token assets accepted anywhere in the lending flow
+A-Token transfer proofs used as on-chain audit trail for every loan event
+Demonstrates Travel Rule compliance on every transaction — a core Cleanverse requirement
+9. Suggested 30-Day Build Timeline
+Week Focus Deliverable
+Week 1 Foundation Cleanverse CVI/CVA integration, wallet connection, identity verification flow
+Week 2 Core Engine Reputation scoring algorithm, lending pool smart contracts, tier system
+Week 3 Frontend Dashboard UI, borrow/lend flows, score display, loan management panel
+Week 4 Polish & Ship Security review, demo video, DoraHacks submission, testnet deployment
+10. Hackathon Submission Checklist
+Every item below must be complete before the submission deadline:
+■ CVI (A-Pass) gate working — unverified wallets cannot access the platform
+■ CVA (A-Token) used for all loan and repayment transactions
+■ Gated lending pool smart contract deployed on testnet
+■ Reputation Score system live and displaying correctly on dashboard
+■ At least one full borrow-and-repay cycle completed end-to-end on testnet
+■ Lender deposit and yield flow working
+■ On-chain proof / audit trail generated for loan events
+■ Frontend dashboard live and publicly accessible
+■ Public GitHub repository with MIT or Apache 2.0 licence
+■ README with setup instructions, architecture overview, and Cleanverse integration notes
+■ Demo video produced — maximum 5 minutes (see Section 11 for script)
+■ Hackathon BUIDL filed under DeFi track
+11. Demo Video Script Guide
+The demo video is watched before judges look at anything else. Keep it visual, real, and focused on the user
+experience — not the code.
+0:00 – 0:30 Hook Open with the problem: 'In DeFi today, you need $1,500 to borrow $1,000. That's
+backwards. ClearLend changes that — your identity becomes your credit.'
+0:30 – 1:30 Gate Demo Show an unverified wallet being blocked. Then show a CVI-verified wallet logging in,
+seeing their Reputation Score and Gold tier on the dashboard.
+1:30 – 2:30 Borrow Flow Walk through a real borrow: enter amount, see collateral reduced because of Gold tier,
+confirm loan, show A-Token collateral locking and funds arriving.
+2:30 – 3:30 Lend Flow Switch to a lender account. Deposit A-Tokens into the pool, show the APY, show the
+compliance audit trail on-chain.
+3:30 – 4:30 Repayment Show the borrower repaying. Score goes up. Progress bar moves toward Platinum tier.
+Collateral is released automatically.
+4:30 – 5:00 Wrap-up End with: 'ClearLend is the first DeFi lending platform where your identity is your credit
+— built on Cleanverse's compliance rails, available to anyone with an A-Pass.'
+12. Why ClearLend Is a Strong Hackathon Contender
+Strategic Advantages
+■ Uses BOTH CVI and CVA actively — ticks every technical requirement the hackathon demands
+■ Fits the DeFi track description word-for-word: gated lending pools + identity-based lending
+■ Solves a universally understood problem — over-collateralisation in DeFi is a well-known pain point
+■ Reputation Score turns identity compliance into a user benefit — people want to improve their score
+■ Gamification angle (tiers, progress bars, score milestones) makes it compelling and sticky for users
+■ Institutional appeal: fully compliant, Travel Rule-enforced lending pool — something banks could actually use
+■ Demo is clean and visual — judges see a real user journey, not a technical diagram
+■ Post-hackathon potential: if Cleanverse grows, ClearLend becomes their flagship DeFi use case
+ClearLend Product Specification · Cleanverse Hackathon 2026 · Prepared July 2026 · Confidential — Team Use Only
