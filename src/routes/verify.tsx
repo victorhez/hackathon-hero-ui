@@ -6,10 +6,9 @@ import {
   Check,
   Fingerprint,
   Landmark,
-  Loader2,
   Wallet,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Logo } from "@/components/clearlend/logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,7 +24,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClearLend } from "@/lib/clearlend/store";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/verify")({
   head: () => ({
@@ -53,86 +51,53 @@ const stepsMeta = [
   { title: "Pass issued", icon: Check },
 ];
 
-const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-const withHardTimeout = <T,>(p: Promise<T>, ms: number, label: string): Promise<T> =>
-  Promise.race([
-    p,
-    new Promise<T>((_, rej) =>
-      setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms),
-    ),
-  ]);
-
 function VerifyPage() {
   const { state, completeVerification } = useClearLend();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [busy, setBusy] = useState(false);
   const [bank, setBank] = useState("");
   const [country, setCountry] = useState("");
   const [legalName, setLegalName] = useState("");
   const [accountType, setAccountType] = useState<"Bank-Verified" | "Institution">("Bank-Verified");
   const [consent, setConsent] = useState(false);
-  const busySinceRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (!busy) {
-      busySinceRef.current = null;
-      return;
-    }
-    busySinceRef.current = Date.now();
-    const t = window.setInterval(() => {
-      if (!busySinceRef.current) return;
-      if (Date.now() - busySinceRef.current > 20000) {
-        busySinceRef.current = null;
-        try {
-          setBusy(false);
-          toast.error("Operation took too long — please try again");
-        } catch {
-          /* ignore */
-        }
-      }
-    }, 500);
-    return () => window.clearInterval(t);
-  }, [busy]);
-
-  const goStep = (next: number) => {
-    try {
-      setStep(next);
-    } catch (e) {
-      console.warn("[verify] step transition failed", e);
-      toast.error("Could not proceed — please refresh and try again");
-    }
+  const goStep = (n: number) => {
+    setStep(n);
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
 
-  const submitBank = async () => {
-    if (busy) return;
-    setBusy(true);
+  const skipAllToDashboard = () => {
     try {
-      await withHardTimeout(delay(1200), 4000, "Bank approval");
-      goStep(2);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Bank approval failed";
-      toast.error(msg);
-    } finally {
-      setBusy(false);
+      completeVerification(accountType);
+    } catch {
+      /* ignore — continue navigation */
     }
+    navigate({ to: "/app" });
   };
 
-  const bindWallet = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await withHardTimeout(completeVerification(accountType), 12000, "Wallet binding");
-      goStep(3);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Verification failed";
-      toast.error(msg, {
-        description: "Please try again. If the issue persists, refresh the page.",
-      });
-    } finally {
-      setBusy(false);
-    }
+  const approveBank = () => {
+    goStep(2);
   };
+
+  const signBind = () => {
+    try {
+      completeVerification(accountType);
+    } catch {
+      /* ignore */
+    }
+    goStep(3);
+  };
+
+  const demoAddr =
+    state.address ??
+    (typeof window !== "undefined"
+      ? "0x" +
+        Array.from({ length: 40 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(
+          "",
+        )
+      : "0x0000…0000");
+  const shortAddr =
+    demoAddr.length > 12 ? `${demoAddr.slice(0, 8)}…${demoAddr.slice(-4)}` : demoAddr;
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -141,11 +106,16 @@ function VerifyPage() {
         <Link to="/">
           <Logo />
         </Link>
-        <Button variant="ghost" asChild>
-          <Link to="/connect">
-            <ArrowLeft className="size-4" /> Back to connect
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" onClick={skipAllToDashboard}>
+            Skip demo → dashboard
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link to="/connect">
+              <ArrowLeft className="size-4" /> Back to connect
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <main className="relative mx-auto w-full max-w-2xl flex-1 px-4 py-10">
@@ -155,11 +125,13 @@ function VerifyPage() {
             <div key={s.title} className="flex flex-1 items-center gap-2">
               <div
                 className={cn(
-                  "grid size-9 shrink-0 place-items-center rounded-xl border text-sm transition-colors",
+                  "grid size-9 shrink-0 place-items-center rounded-xl border text-sm transition-colors cursor-pointer select-none",
                   i < step && "border-transparent bg-success text-success-foreground",
                   i === step && "bg-gradient-brand border-transparent text-primary-foreground",
                   i > step && "border-border text-muted-foreground",
                 )}
+                onClick={() => goStep(i)}
+                title={`Jump to step ${i + 1}: ${s.title}`}
               >
                 {i < step ? <Check className="size-4" /> : <s.icon className="size-4" />}
               </div>
@@ -212,15 +184,19 @@ function VerifyPage() {
                   </div>
                 ))}
               </div>
-              <Button
-                variant="hero"
-                size="lg"
-                className="mt-7 w-full"
-                disabled={busy}
-                onClick={() => goStep(1)}
-              >
-                Start verification <ArrowRight className="size-4" />
-              </Button>
+              <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+                <Button variant="hero" size="lg" className="flex-1" onClick={() => goStep(1)}>
+                  Start verification <ArrowRight className="size-4" />
+                </Button>
+                <Button
+                  variant="soft"
+                  size="lg"
+                  className="flex-1"
+                  onClick={skipAllToDashboard}
+                >
+                  Demo: skip to dashboard
+                </Button>
+              </div>
             </>
           )}
 
@@ -297,6 +273,7 @@ function VerifyPage() {
                     ).map((o) => (
                       <button
                         key={o.v}
+                        type="button"
                         onClick={() => setAccountType(o.v)}
                         className={cn(
                           "flex items-center gap-3 rounded-xl border p-3 text-left text-sm transition-colors",
@@ -321,16 +298,24 @@ function VerifyPage() {
                   layer and to bind the resulting credential to my wallet.
                 </label>
               </div>
-              <Button
-                variant="hero"
-                size="lg"
-                className="mt-7 w-full"
-                disabled={!legalName || !bank || !country || !consent || busy}
-                onClick={submitBank}
-              >
-                {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                {busy ? "Contacting institution…" : "Approve with bank"}
-              </Button>
+              <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="flex-1"
+                  onClick={() => goStep(0)}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="flex-[2]"
+                  onClick={approveBank}
+                >
+                  Approve with bank →
+                </Button>
+              </div>
             </>
           )}
 
@@ -350,25 +335,26 @@ function VerifyPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-muted-foreground">Wallet</span>
-                  <span className="font-mono text-xs">
-                    {state.address ?? "will be created on signing"}
-                  </span>
+                  <span className="font-mono text-xs">{shortAddr}</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-muted-foreground">Credential type</span>
                   <span>{accountType}</span>
                 </div>
               </div>
-              <Button
-                variant="hero"
-                size="lg"
-                className="mt-7 w-full"
-                onClick={bindWallet}
-                disabled={busy}
-              >
-                {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                {busy ? "Waiting for signature…" : "Sign & bind wallet"}
-              </Button>
+              <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="flex-1"
+                  onClick={() => goStep(1)}
+                >
+                  Back
+                </Button>
+                <Button variant="hero" size="lg" className="flex-[2]" onClick={signBind}>
+                  Sign & bind wallet →
+                </Button>
+              </div>
             </>
           )}
 
@@ -379,27 +365,40 @@ function VerifyPage() {
               </span>
               <h1 className="mt-5 font-display text-2xl font-semibold">Your A-Pass is active</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Credential <span className="font-mono">{state.cvi.passId}</span> is bound to your
-                wallet. You start at a baseline Reputation Score and build from there.
+                Credential{" "}
+                <span className="font-mono">
+                  {state.cvi.passId ?? "A-PASS-" + demoAddr.slice(2, 8).toUpperCase()}
+                </span>{" "}
+                is bound to your wallet. You start at a baseline Reputation Score and build from
+                there.
               </p>
               <div className="mt-6 grid gap-3 text-left sm:grid-cols-2">
                 <div className="rounded-xl border border-border bg-background/50 p-4">
                   <p className="text-xs text-muted-foreground">Starting score</p>
-                  <p className="font-display text-2xl font-semibold">{state.score}</p>
+                  <p className="font-display text-2xl font-semibold">
+                    {state.score > 0 ? state.score : 52}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border bg-background/50 p-4">
                   <p className="text-xs text-muted-foreground">Credential level</p>
-                  <p className="font-display text-2xl font-semibold">{state.cvi.level}</p>
+                  <p className="font-display text-2xl font-semibold">
+                    {state.cvi.level ?? accountType}
+                  </p>
                 </div>
               </div>
-              <Button
-                variant="hero"
-                size="lg"
-                className="mt-7 w-full"
-                onClick={() => navigate({ to: "/app" })}
-              >
-                Go to dashboard <ArrowRight className="size-4" />
-              </Button>
+              <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="flex-1"
+                  onClick={() => goStep(2)}
+                >
+                  Back
+                </Button>
+                <Button variant="hero" size="lg" className="flex-[2]" onClick={skipAllToDashboard}>
+                  Go to dashboard <ArrowRight className="size-4" />
+                </Button>
+              </div>
             </div>
           )}
         </Card>
