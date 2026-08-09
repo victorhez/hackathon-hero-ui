@@ -25,6 +25,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClearLend } from "@/lib/clearlend/store";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/verify")({
   head: () => ({
@@ -65,16 +66,40 @@ function VerifyPage() {
 
   const submitBank = async () => {
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setBusy(false);
-    setStep(2);
+    try {
+      await Promise.race([
+        new Promise((r) => setTimeout(r, 1200)),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error("Bank check timed out")), 6000),
+        ),
+      ]);
+      setStep(2);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Bank approval failed";
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const bindWallet = async () => {
     setBusy(true);
-    await completeVerification(accountType);
-    setBusy(false);
-    setStep(3);
+    try {
+      await Promise.race([
+        completeVerification(accountType),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error("Verification timed out")), 15000),
+        ),
+      ]);
+      setStep(3);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Verification failed";
+      toast.error(msg, {
+        description: "Please try again. If the issue persists, refresh the page.",
+      });
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (

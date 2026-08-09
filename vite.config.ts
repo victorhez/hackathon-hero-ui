@@ -91,11 +91,28 @@ function collectScoreInputs(
 
 async function readJsonBody(req: {
   on: (e: string, cb: (chunk: Buffer) => void) => void;
+  readableEnded?: boolean;
+  body?: unknown;
 }): Promise<unknown> {
+  if (req.body !== undefined) return req.body;
+  if (req.readableEnded) return {};
   return new Promise((resolve, reject) => {
+    const BODY_TIMEOUT_MS = 3000;
+    let settled = false;
     const chunks: Buffer[] = [];
-    req.on("data", (chunk: Buffer) => chunks.push(chunk));
-    req.on("end", () => {
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve({});
+    }, BODY_TIMEOUT_MS);
+    const onData = (chunk: Buffer) => {
+      if (settled) return;
+      chunks.push(chunk);
+    };
+    const onEnd = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       const raw = Buffer.concat(chunks).toString("utf-8");
       if (!raw) {
         resolve({});
@@ -106,8 +123,16 @@ async function readJsonBody(req: {
       } catch (e) {
         reject(e);
       }
-    });
-    req.on("error", reject);
+    };
+    const onError = (err: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(err);
+    };
+    req.on("data", onData);
+    req.on("end", onEnd);
+    req.on("error", onError);
   });
 }
 
@@ -118,6 +143,39 @@ function cleanverseDevApiPlugin(): Plugin {
       server.middlewares.use("/api/cleanverse", async (req, res, next) => {
         const url = new URL(req.url ?? "/", "http://localhost");
         const pathname = url.pathname.replace(/\/+$/, "");
+        const OVERALL_TIMEOUT_MS = 5000;
+        let responded = false;
+        const safetyTimer = setTimeout(() => {
+          if (responded) return;
+          responded = true;
+          console.warn("[clearlend-dev-api] overall timeout for", pathname);
+          if (!res.headersSent) {
+            res.statusCode = 504;
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+          }
+          try {
+            res.end(JSON.stringify({ error: "Dev API timeout", path: pathname }));
+          } catch {
+            try {
+              res.destroy();
+            } catch {
+              /* ignore */
+            }
+          }
+        }, OVERALL_TIMEOUT_MS);
+        const safeEnd = (body: string) => {
+          if (responded) return;
+          responded = true;
+          clearTimeout(safetyTimer);
+          res.end(body);
+        };
+        const safeSendStatus = (code: number, body: unknown) => {
+          if (responded) return;
+          responded = true;
+          clearTimeout(safetyTimer);
+          if (!res.headersSent) res.statusCode = code;
+          res.end(JSON.stringify(body));
+        };
 
         try {
           let body: unknown = {};
@@ -177,7 +235,7 @@ function cleanverseDevApiPlugin(): Plugin {
                 lastCheckedAt: now,
               };
               res.statusCode = 200;
-              res.end(
+              safeEnd(
                 JSON.stringify({
                   sessionId: "sess_dev_" + Math.random().toString(36).slice(2, 10),
                   redirectUrl: `${redirectUrl}?dev=cvi&wallet=${encodeURIComponent(wallet)}`,
@@ -210,14 +268,14 @@ function cleanverseDevApiPlugin(): Plugin {
               lastCheckedAt: now,
             };
             res.statusCode = 200;
-            res.end(JSON.stringify({ status, dimensions }));
+            safeEnd(JSON.stringify({ status, dimensions }));
             return;
           }
 
           if (pathname === "/cva-balances") {
             const wallet = getWallet();
             res.statusCode = 200;
-            res.end(
+            safeEnd(
               JSON.stringify({
                 balances: [{ asset: "aUSDC", amount: 0, lastUpdatedAt: Date.now() }],
                 wallet,
@@ -229,7 +287,7 @@ function cleanverseDevApiPlugin(): Plugin {
           if (pathname === "/cva-history") {
             const wallet = getWallet();
             res.statusCode = 200;
-            res.end(
+            safeEnd(
               JSON.stringify({
                 transfers: [],
                 volume: 0,
@@ -245,12 +303,12 @@ function cleanverseDevApiPlugin(): Plugin {
           if (pathname === "/cva-transfer") {
             const input = body as Record<string, unknown>;
             res.statusCode = 200;
-            res.end(
+            safeEnd(
               JSON.stringify({
                 proofHash: `proof_dev_${Math.random().toString(36).slice(2, 10)}_${Date.now()}`,
                 txHash: randomHash(),
-                amount: Number(input.amount ?? 0),
-                asset: String(input.asset ?? "aUSDC"),
+                amount: Number(input["amount"] ?? 0),
+                asset: String(input["asset"] ?? "aUSDC"),
                 at: Date.now(),
                 travelRuleAttached: true,
               }),
@@ -288,16 +346,14 @@ function cleanverseDevApiPlugin(): Plugin {
               ),
             );
             res.statusCode = 200;
-            res.end(JSON.stringify({ dimensions, score, walletAgeDays }));
+            safeEnd(JSON.stringify({ dimensions, score, walletAgeDays }));
             return;
           }
 
-          res.statusCode = 404;
-          res.end(JSON.stringify({ error: "Not found" }));
+          safeSendStatus(404, { error: "Not found" });
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "Unknown error";
-          res.statusCode = 400;
-          res.end(JSON.stringify({ error: message }));
+          safeSendStatus(400, { error: message });
         }
       });
     },

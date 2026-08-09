@@ -10,7 +10,13 @@ import {
   POOL,
   tierForScore,
 } from "./types";
-import { apiCheckCvi, apiGetCvaBalances, apiGetScore, apiSubmitCvaTransfer } from "./client-api";
+import {
+  apiCheckCvi,
+  apiGetCvaBalances,
+  apiGetScore,
+  apiSubmitCvaTransfer,
+  type CheckCviResponse,
+} from "./client-api";
 
 const STORAGE_KEY = "clearlend.state.v2";
 const DAY = 86_400_000;
@@ -364,14 +370,20 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      const messageText = `ClearLend login · ${new Date().toISOString().slice(0, 10)} · ${address.slice(0, 8)}…${address.slice(-6)}`;
+      let hexMessage: string;
+      if (typeof Buffer !== "undefined" && typeof Buffer.from === "function") {
+        hexMessage = `0x${Buffer.from(messageText).toString("hex")}`;
+      } else {
+        hexMessage = "0x";
+        for (let i = 0; i < messageText.length; i++) {
+          hexMessage += messageText.charCodeAt(i).toString(16).padStart(2, "0");
+        }
+        hexMessage = `0x${hexMessage.slice(2)}`;
+      }
       await eth.request({
         method: "personal_sign",
-        params: [
-          `0x${Buffer.from(
-            `ClearLend login · ${new Date().toISOString().slice(0, 10)} · ${address.slice(0, 8)}…${address.slice(-6)}`,
-          ).toString("hex")}`,
-          address,
-        ],
+        params: [hexMessage, address],
       });
     } catch {
       /* signature is optional — proceed without it */
@@ -388,10 +400,45 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
 
     let verified = false;
     try {
+      const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
+        Promise.race([
+          p,
+          new Promise<T>((resolve) =>
+            setTimeout(() => {
+              console.warn("[connect] API call timed out after", ms, "ms");
+              resolve(fallback);
+            }, ms),
+          ),
+        ]);
+
+      const cviFallback: CheckCviResponse = {
+        status: {
+          verified: false,
+          passId: null,
+          issuedAt: null,
+          expiresAt: null,
+          level: null,
+          wallet: address,
+          country: null,
+          lastCheckedAt: Date.now(),
+        },
+        dimensions: [],
+      };
+      const balFallback: { balances: { asset: string; amount: number; lastUpdatedAt: number }[] } =
+        {
+          balances: [{ asset: "aUSDC", amount: 0, lastUpdatedAt: Date.now() }],
+        };
+      const scoreFallback: { dimensions: ScoreDimension[]; score: number; walletAgeDays: number } =
+        {
+          dimensions: [],
+          score: 0,
+          walletAgeDays: 0,
+        };
+
       const [cviResult, balanceResult, scoreResult] = await Promise.all([
-        apiCheckCvi(address),
-        apiGetCvaBalances(address),
-        apiGetScore({ wallet: address }),
+        withTimeout(apiCheckCvi(address), 9000, cviFallback),
+        withTimeout(apiGetCvaBalances(address), 9000, balFallback),
+        withTimeout(apiGetScore({ wallet: address }), 9000, scoreFallback),
       ]);
 
       const cvi = cviResult.status;
@@ -452,19 +499,29 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
     async (level: "Bank-Verified" | "Institution" = "Bank-Verified") => {
       const fallbackAddr = randomHash().slice(0, 42);
       const fallbackProvider: WalletProvider = "MetaMask";
-      const currentProvider = state.provider ?? fallbackProvider;
-      const currentChain = state.chain;
-      let currentAddr = state.address ?? fallbackAddr;
-      const needsAddress = !state.address;
+      let currentAddr: string | null = null;
+      let currentProvider: WalletProvider | null = null;
+      let currentChain: string | null = null;
 
-      if (needsAddress) {
-        setState({
-          ...state,
+      setState((prev) => {
+        const addr = prev.address ?? fallbackAddr;
+        const prov = prev.provider ?? fallbackProvider;
+        const chain = prev.chain;
+        currentAddr = addr;
+        currentProvider = prov;
+        currentChain = chain;
+        if (prev.address) return prev;
+        return {
+          ...prev,
           connected: true,
-          address: currentAddr,
-          provider: currentProvider,
-        });
-      }
+          address: addr,
+          provider: prov,
+        };
+      });
+
+      const wallet = currentAddr ?? fallbackAddr;
+      const provider = currentProvider ?? fallbackProvider;
+      const chain = currentChain ?? "Base";
 
       toast.loading("Finalizing verification with Cleanverse…", { id: "verify-loading" });
 
@@ -472,9 +529,35 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       let apiBalance = 0;
 
       try {
+        const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
+          Promise.race([
+            p,
+            new Promise<T>((resolve) =>
+              setTimeout(() => {
+                console.warn("[completeVerification] API call timed out after", ms, "ms");
+                resolve(fallback);
+              }, ms),
+            ),
+          ]);
+
+        const scoreFallback: {
+          dimensions: ScoreDimension[];
+          score: number;
+          walletAgeDays: number;
+        } = {
+          dimensions: [],
+          score: 0,
+          walletAgeDays: 0,
+        };
+        const balFallback: {
+          balances: { asset: string; amount: number; lastUpdatedAt: number }[];
+        } = {
+          balances: [{ asset: "aUSDC", amount: 0, lastUpdatedAt: Date.now() }],
+        };
+
         const [scoreRes, balRes] = await Promise.all([
-          apiGetScore({ wallet: currentAddr }),
-          apiGetCvaBalances(currentAddr),
+          withTimeout(apiGetScore({ wallet }), 8000, scoreFallback),
+          withTimeout(apiGetCvaBalances(wallet), 8000, balFallback),
         ]);
 
         apiDims = scoreRes.dimensions ?? [];
@@ -489,9 +572,8 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       toast.dismiss("verify-loading");
 
       setState((prev) => {
-        const addr = prev.address ?? currentAddr;
-        const prov = prev.provider ?? currentProvider;
-        const chain = prev.chain;
+        const addr = prev.address ?? wallet;
+        const prov = prev.provider ?? provider;
         const base = newUserVerifiedProfile(
           addr,
           prov,
@@ -508,18 +590,49 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       });
       toast.success("A-Pass verified", { description: "Welcome to ClearLend." });
     },
-    [state.address, state.provider, state.chain],
+    [],
   );
 
   const recheckCvi = useCallback(async () => {
     toast.loading("Re-verifying A-Pass on-chain…", { id: "recheck-cvi" });
     try {
-      let addr = state.address;
-      if (!addr) {
-        addr = randomHash().slice(0, 42);
-        setState((s) => ({ ...s, address: addr! }));
-      }
-      const cviResult = await apiCheckCvi(addr!);
+      let resolvedAddr: string | null = null;
+      setState((s) => {
+        if (s.address) {
+          resolvedAddr = s.address;
+          return s;
+        }
+        const addr = randomHash().slice(0, 42);
+        resolvedAddr = addr;
+        return { ...s, address: addr };
+      });
+
+      const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
+        Promise.race([
+          p,
+          new Promise<T>((resolve) =>
+            setTimeout(() => {
+              console.warn("[recheckCvi] API call timed out after", ms, "ms");
+              resolve(fallback);
+            }, ms),
+          ),
+        ]);
+
+      const fallback: CheckCviResponse = {
+        status: {
+          verified: false,
+          passId: null,
+          issuedAt: null,
+          expiresAt: null,
+          level: null,
+          wallet: resolvedAddr ?? null,
+          country: null,
+          lastCheckedAt: Date.now(),
+        },
+        dimensions: [],
+      };
+
+      const cviResult = await withTimeout(apiCheckCvi(resolvedAddr!), 8000, fallback);
       setState((s) => ({
         ...s,
         cvi: {
@@ -531,15 +644,15 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
           lastCheckedAt: cviResult.status.lastCheckedAt,
         },
       }));
-      toast.dismiss("recheck-cvi");
       toast.success("A-Pass re-verified for this session");
     } catch (err) {
       console.warn("[recheckCvi] failed", err);
-      toast.dismiss("recheck-cvi");
       setState((s) => ({ ...s, cvi: { ...s.cvi, lastCheckedAt: Date.now() } }));
       toast.success("A-Pass re-verified for this session");
+    } finally {
+      toast.dismiss("recheck-cvi");
     }
-  }, [state.address]);
+  }, []);
 
   const setChain = useCallback((chain: string) => setState((s) => ({ ...s, chain })), []);
   const setRole = useCallback(
