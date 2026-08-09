@@ -523,7 +523,8 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
       const provider = currentProvider ?? fallbackProvider;
       const chain = currentChain ?? "Base";
 
-      toast.loading("Finalizing verification with Cleanverse…", { id: "verify-loading" });
+      const TOAST_ID = "verify-loading";
+      toast.loading("Finalizing verification with Cleanverse…", { id: TOAST_ID });
 
       let apiDims: ScoreDimension[] = [];
       let apiBalance = 0;
@@ -567,9 +568,9 @@ export function ClearLendProvider({ children }: { children: React.ReactNode }) {
           0;
       } catch (err) {
         console.warn("[completeVerification] API fetch failed", err);
+      } finally {
+        toast.dismiss(TOAST_ID);
       }
-
-      toast.dismiss("verify-loading");
 
       setState((prev) => {
         const addr = prev.address ?? wallet;

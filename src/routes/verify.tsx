@@ -9,7 +9,7 @@ import {
   Loader2,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/clearlend/logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -53,6 +53,15 @@ const stepsMeta = [
   { title: "Pass issued", icon: Check },
 ];
 
+const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+const withHardTimeout = <T,>(p: Promise<T>, ms: number, label: string): Promise<T> =>
+  Promise.race([
+    p,
+    new Promise<T>((_, rej) =>
+      setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms),
+    ),
+  ]);
+
 function VerifyPage() {
   const { state, completeVerification } = useClearLend();
   const navigate = useNavigate();
@@ -63,17 +72,44 @@ function VerifyPage() {
   const [legalName, setLegalName] = useState("");
   const [accountType, setAccountType] = useState<"Bank-Verified" | "Institution">("Bank-Verified");
   const [consent, setConsent] = useState(false);
+  const busySinceRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!busy) {
+      busySinceRef.current = null;
+      return;
+    }
+    busySinceRef.current = Date.now();
+    const t = window.setInterval(() => {
+      if (!busySinceRef.current) return;
+      if (Date.now() - busySinceRef.current > 20000) {
+        busySinceRef.current = null;
+        try {
+          setBusy(false);
+          toast.error("Operation took too long — please try again");
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 500);
+    return () => window.clearInterval(t);
+  }, [busy]);
+
+  const goStep = (next: number) => {
+    try {
+      setStep(next);
+    } catch (e) {
+      console.warn("[verify] step transition failed", e);
+      toast.error("Could not proceed — please refresh and try again");
+    }
+  };
 
   const submitBank = async () => {
+    if (busy) return;
     setBusy(true);
     try {
-      await Promise.race([
-        new Promise((r) => setTimeout(r, 1200)),
-        new Promise<void>((_, reject) =>
-          setTimeout(() => reject(new Error("Bank check timed out")), 6000),
-        ),
-      ]);
-      setStep(2);
+      await withHardTimeout(delay(1200), 4000, "Bank approval");
+      goStep(2);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Bank approval failed";
       toast.error(msg);
@@ -83,15 +119,11 @@ function VerifyPage() {
   };
 
   const bindWallet = async () => {
+    if (busy) return;
     setBusy(true);
     try {
-      await Promise.race([
-        completeVerification(accountType),
-        new Promise<void>((_, reject) =>
-          setTimeout(() => reject(new Error("Verification timed out")), 15000),
-        ),
-      ]);
-      setStep(3);
+      await withHardTimeout(completeVerification(accountType), 12000, "Wallet binding");
+      goStep(3);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Verification failed";
       toast.error(msg, {
@@ -180,7 +212,13 @@ function VerifyPage() {
                   </div>
                 ))}
               </div>
-              <Button variant="hero" size="lg" className="mt-7 w-full" onClick={() => setStep(1)}>
+              <Button
+                variant="hero"
+                size="lg"
+                className="mt-7 w-full"
+                disabled={busy}
+                onClick={() => goStep(1)}
+              >
                 Start verification <ArrowRight className="size-4" />
               </Button>
             </>
