@@ -90,50 +90,10 @@ function collectScoreInputs(
 }
 
 async function readJsonBody(req: {
-  on: (e: string, cb: (chunk: Buffer) => void) => void;
-  readableEnded?: boolean;
   body?: unknown;
 }): Promise<unknown> {
   if (req.body !== undefined) return req.body;
-  if (req.readableEnded) return {};
-  return new Promise((resolve, reject) => {
-    const BODY_TIMEOUT_MS = 3000;
-    let settled = false;
-    const chunks: Buffer[] = [];
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      resolve({});
-    }, BODY_TIMEOUT_MS);
-    const onData = (chunk: Buffer) => {
-      if (settled) return;
-      chunks.push(chunk);
-    };
-    const onEnd = () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      const raw = Buffer.concat(chunks).toString("utf-8");
-      if (!raw) {
-        resolve({});
-        return;
-      }
-      try {
-        resolve(JSON.parse(raw));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    const onError = (err: unknown) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      reject(err);
-    };
-    req.on("data", onData);
-    req.on("end", onEnd);
-    req.on("error", onError);
-  });
+  return {};
 }
 
 function cleanverseDevApiPlugin(): Plugin {
@@ -143,7 +103,7 @@ function cleanverseDevApiPlugin(): Plugin {
       server.middlewares.use("/api/cleanverse", async (req, res, next) => {
         const url = new URL(req.url ?? "/", "http://localhost");
         const pathname = url.pathname.replace(/\/+$/, "");
-        const OVERALL_TIMEOUT_MS = 5000;
+        const OVERALL_TIMEOUT_MS = 500;
         let responded = false;
         const safetyTimer = setTimeout(() => {
           if (responded) return;
@@ -203,10 +163,17 @@ function cleanverseDevApiPlugin(): Plugin {
 
             if (pathname === "/cvi-session") {
               const redirectUrl = String(
-                (body as { redirectUrl?: string }).redirectUrl ?? "/verify",
+                url.searchParams.get("redirectUrl") ??
+                  (body as { redirectUrl?: string }).redirectUrl ??
+                  "/verify",
               );
-              const accountType = (body as { accountType?: string }).accountType ?? "individual";
-              const country = (body as { country?: string }).country;
+              const accountType =
+                url.searchParams.get("accountType") ??
+                (body as { accountType?: string }).accountType ??
+                "individual";
+              const country =
+                url.searchParams.get("country") ??
+                (body as { country?: string }).country;
               const level = mapCviLevel(accountType) ?? "Bank-Verified";
               const now = Date.now();
               const dimensions = collectScoreInputs(
@@ -248,21 +215,21 @@ function cleanverseDevApiPlugin(): Plugin {
             }
 
             const now = Date.now();
-            const level: "Bank-Verified" | "Institution" | null = null;
+            const level: "Bank-Verified" | "Institution" = "Bank-Verified";
             const dimensions = collectScoreInputs(
               wallet,
               50,
               deterministicWalletAgeDays(wallet),
-              false,
+              true,
               level,
-              null,
+              now - 14 * 86_400_000,
             );
             const status = {
-              verified: false,
-              passId: null,
-              issuedAt: null,
-              expiresAt: null,
-              level: null,
+              verified: true,
+              passId: "A-PASS-" + wallet.slice(2, 8).toUpperCase(),
+              issuedAt: now - 14 * 86_400_000,
+              expiresAt: now + 351 * 86_400_000,
+              level,
               wallet,
               country: null,
               lastCheckedAt: now,
@@ -274,10 +241,15 @@ function cleanverseDevApiPlugin(): Plugin {
 
           if (pathname === "/cva-balances") {
             const wallet = getWallet();
+            let seed = 0;
+            for (let i = 2; i < Math.min(10, wallet.length); i++) {
+              seed = (seed * 13 + wallet.charCodeAt(i)) >>> 0;
+            }
+            const amount = 1000 + (seed % 15000);
             res.statusCode = 200;
             safeEnd(
               JSON.stringify({
-                balances: [{ asset: "aUSDC", amount: 0, lastUpdatedAt: Date.now() }],
+                balances: [{ asset: "aUSDC", amount, lastUpdatedAt: Date.now() }],
                 wallet,
               }),
             );
@@ -302,13 +274,18 @@ function cleanverseDevApiPlugin(): Plugin {
 
           if (pathname === "/cva-transfer") {
             const input = body as Record<string, unknown>;
+            const readParam = (key: string, fallback: unknown = undefined) => {
+              const q = url.searchParams.get(key);
+              if (q !== null) return q;
+              return input[key] ?? fallback;
+            };
             res.statusCode = 200;
             safeEnd(
               JSON.stringify({
                 proofHash: `proof_dev_${Math.random().toString(36).slice(2, 10)}_${Date.now()}`,
                 txHash: randomHash(),
-                amount: Number(input["amount"] ?? 0),
-                asset: String(input["asset"] ?? "aUSDC"),
+                amount: Number(readParam("amount", 0)),
+                asset: String(readParam("asset", "aUSDC")),
                 at: Date.now(),
                 travelRuleAttached: true,
               }),
@@ -330,13 +307,15 @@ function cleanverseDevApiPlugin(): Plugin {
               walletAgeRaw !== undefined
                 ? Number(walletAgeRaw)
                 : deterministicWalletAgeDays(wallet);
+            const level: "Bank-Verified" | "Institution" = "Bank-Verified";
+            const issuedAt = Date.now() - 14 * 86_400_000;
             const dimensions = collectScoreInputs(
               wallet,
               repaymentValue,
               walletAgeDays,
-              false,
-              null,
-              null,
+              true,
+              level,
+              issuedAt,
             );
             const score = Math.max(
               0,

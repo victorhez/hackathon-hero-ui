@@ -49,6 +49,7 @@ function BorrowPage() {
   const [amount, setAmount] = useState(Math.min(1000, tier.limit));
   const [termDays, setTermDays] = useState(14);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const quote = useMemo(() => {
     const collateral = amount * tier.collateralRatio;
@@ -64,12 +65,35 @@ function BorrowPage() {
 
   const insufficient = quote.collateral > state.balances.aUSDC;
   const overLimit = amount > tier.limit;
-  const canBorrow = amount > 0 && !insufficient && !overLimit;
+  const canBorrow = amount > 0 && !insufficient && !overLimit && !submitting;
 
   const submit = async () => {
-    await borrow({ amount, collateral: quote.collateral, termDays, apr: tier.apr });
-    setConfirmOpen(false);
-    navigate({ to: "/app/loans" });
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T) =>
+        Promise.race([
+          p,
+          new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+        ]);
+      const loanFallback: Parameters<typeof borrow>[0] = {
+        amount,
+        collateral: quote.collateral,
+        termDays,
+        apr: tier.apr,
+      };
+      const loan: Awaited<ReturnType<typeof borrow>> | null = await withTimeout(
+        borrow(loanFallback),
+        8000,
+        null,
+      );
+      setConfirmOpen(false);
+      if (loan || state.loans.length > 0) {
+        navigate({ to: "/app/loans" });
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -250,10 +274,10 @@ function BorrowPage() {
             ))}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+            <Button variant="ghost" disabled={submitting} onClick={() => setConfirmOpen(false)}>
               Cancel
             </Button>
-            <Button variant="hero" onClick={submit}>
+            <Button variant="hero" disabled={submitting || !canBorrow} onClick={submit}>
               Sign & borrow
             </Button>
           </DialogFooter>

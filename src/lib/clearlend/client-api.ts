@@ -10,11 +10,24 @@ const API_BASE = "/api/cleanverse";
 
 const FETCH_TIMEOUT_MS = 6000;
 
-async function request<T>(path: string, init: RequestInit = {}, fallback: T): Promise<T> {
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  fallback: T,
+  queryParams?: Record<string, unknown>,
+): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    let url = `${API_BASE}${path}`;
+    if (queryParams && Object.keys(queryParams).length) {
+      const qs = Object.entries(queryParams)
+        .filter(([, v]) => v !== undefined && v !== null && v !== "")
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+        .join("&");
+      if (qs) url += (url.includes("?") ? "&" : "?") + qs;
+    }
+    const res = await fetch(url, {
       ...init,
       headers: {
         "Content-Type": "application/json",
@@ -68,7 +81,7 @@ export async function apiCheckCvi(wallet: string): Promise<CheckCviResponse> {
     },
     dimensions: [],
   };
-  return request(`/cvi-check`, { method: "POST", body: JSON.stringify({ wallet }) }, fallback);
+  return request(`/cvi-check`, { method: "POST", body: JSON.stringify({ wallet }) }, fallback, { wallet });
 }
 
 export type CviSessionResponse = {
@@ -86,7 +99,7 @@ export async function apiCreateCviSession(input: {
     sessionId: `sess_demo_${Math.random().toString(36).slice(2, 10)}`,
     redirectUrl: `${input.redirectUrl}?demo=cvi`,
   };
-  return request(`/cvi-session`, { method: "POST", body: JSON.stringify(input) }, fallback);
+  return request(`/cvi-session`, { method: "POST", body: JSON.stringify(input) }, fallback, input);
 }
 
 export type CvaBalancesResponse = { balances: CvaBalance[] };
@@ -95,7 +108,7 @@ export async function apiGetCvaBalances(wallet: string): Promise<CvaBalancesResp
   const fallback: CvaBalancesResponse = {
     balances: [{ asset: "aUSDC", amount: 0, lastUpdatedAt: Date.now() }],
   };
-  return request(`/cva-balances`, { method: "POST", body: JSON.stringify({ wallet }) }, fallback);
+  return request(`/cva-balances`, { method: "POST", body: JSON.stringify({ wallet }) }, fallback, { wallet });
 }
 
 export type CvaHistoryResponse = {
@@ -114,7 +127,7 @@ export async function apiGetCvaHistory(wallet: string): Promise<CvaHistoryRespon
     count: 0,
     windowDays: 180,
   };
-  return request(`/cva-history`, { method: "POST", body: JSON.stringify({ wallet }) }, fallback);
+  return request(`/cva-history`, { method: "POST", body: JSON.stringify({ wallet }) }, fallback, { wallet });
 }
 
 export async function apiSubmitCvaTransfer(input: {
@@ -143,7 +156,7 @@ export async function apiSubmitCvaTransfer(input: {
     at: Date.now(),
     travelRuleAttached: true,
   };
-  return request(`/cva-transfer`, { method: "POST", body: JSON.stringify(input) }, fallback);
+  return request(`/cva-transfer`, { method: "POST", body: JSON.stringify(input) }, fallback, input);
 }
 
 export type ScoreResponse = {
@@ -162,5 +175,5 @@ export async function apiGetScore(input: {
     score: 0,
     walletAgeDays: 0,
   };
-  return request(`/score`, { method: "POST", body: JSON.stringify(input) }, fallback);
+  return request(`/score`, { method: "POST", body: JSON.stringify(input) }, fallback, input);
 }

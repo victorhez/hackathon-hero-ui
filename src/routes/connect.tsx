@@ -51,11 +51,20 @@ function ConnectPage() {
     setPending(provider);
     setPhase("connecting");
     setErrorMsg(null);
+    let resultVerified = false;
     try {
-      const result = await connect(provider);
+      const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T) =>
+        Promise.race([
+          p,
+          new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+        ]);
+      const connectPromise = connect(provider);
+      const timeoutFallback = { verified: false, address: "0x" + "0".repeat(40) };
+      const result = await withTimeout(connectPromise, 15000, timeoutFallback);
+      resultVerified = !!result.verified;
       setPhase("checking");
-      await new Promise((r) => setTimeout(r, 500));
-      if (result.verified) {
+      await withTimeout(new Promise((r) => setTimeout(r, 500)), 800, undefined as unknown as void);
+      if (resultVerified) {
         navigate({ to: "/app" });
       } else {
         setPhase("denied");
@@ -66,6 +75,10 @@ function ConnectPage() {
       const msg = err instanceof Error ? err.message : "Could not connect wallet";
       setErrorMsg(msg);
       toast.error(msg);
+    } finally {
+      if (!resultVerified) {
+        setPending(null);
+      }
     }
   };
 

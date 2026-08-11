@@ -60,32 +60,55 @@ function VerifyPage() {
   const [legalName, setLegalName] = useState("");
   const [accountType, setAccountType] = useState<"Bank-Verified" | "Institution">("Bank-Verified");
   const [consent, setConsent] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const goStep = (n: number) => {
     setStep(n);
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    try {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    } catch {
+      /* ignore scroll errors */
+    }
   };
 
-  const skipAllToDashboard = () => {
+  const skipAllToDashboard = async () => {
+    if (busy) return;
+    setBusy(true);
     try {
-      completeVerification(accountType);
-    } catch {
-      /* ignore — continue navigation */
+      try {
+        await Promise.race([
+          completeVerification(accountType),
+          new Promise<void>((r) => setTimeout(r, 3000)),
+        ]);
+      } catch {
+        /* ignore — continue navigation */
+      }
+    } finally {
+      setBusy(false);
+      navigate({ to: "/app" });
     }
-    navigate({ to: "/app" });
   };
 
   const approveBank = () => {
     goStep(2);
   };
 
-  const signBind = () => {
+  const signBind = async () => {
+    if (busy) return;
+    setBusy(true);
     try {
-      completeVerification(accountType);
-    } catch {
-      /* ignore */
+      try {
+        await Promise.race([
+          completeVerification(accountType),
+          new Promise<void>((r) => setTimeout(r, 3000)),
+        ]);
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      setBusy(false);
+      goStep(3);
     }
-    goStep(3);
   };
 
   const demoAddr =
@@ -107,10 +130,10 @@ function VerifyPage() {
           <Logo />
         </Link>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={skipAllToDashboard}>
+          <Button variant="ghost" onClick={skipAllToDashboard} disabled={busy}>
             Skip demo → dashboard
           </Button>
-          <Button variant="ghost" asChild>
+          <Button variant="ghost" asChild disabled={busy}>
             <Link to="/connect">
               <ArrowLeft className="size-4" /> Back to connect
             </Link>
@@ -185,13 +208,20 @@ function VerifyPage() {
                 ))}
               </div>
               <div className="mt-7 flex flex-col gap-2 sm:flex-row">
-                <Button variant="hero" size="lg" className="flex-1" onClick={() => goStep(1)}>
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="flex-1"
+                  disabled={busy}
+                  onClick={() => goStep(1)}
+                >
                   Start verification <ArrowRight className="size-4" />
                 </Button>
                 <Button
                   variant="soft"
                   size="lg"
                   className="flex-1"
+                  disabled={busy}
                   onClick={skipAllToDashboard}
                 >
                   Demo: skip to dashboard
@@ -303,6 +333,7 @@ function VerifyPage() {
                   variant="ghost"
                   size="lg"
                   className="flex-1"
+                  disabled={busy}
                   onClick={() => goStep(0)}
                 >
                   Back
@@ -311,6 +342,7 @@ function VerifyPage() {
                   variant="hero"
                   size="lg"
                   className="flex-[2]"
+                  disabled={busy}
                   onClick={approveBank}
                 >
                   Approve with bank →
@@ -347,11 +379,12 @@ function VerifyPage() {
                   variant="ghost"
                   size="lg"
                   className="flex-1"
+                  disabled={busy}
                   onClick={() => goStep(1)}
                 >
                   Back
                 </Button>
-                <Button variant="hero" size="lg" className="flex-[2]" onClick={signBind}>
+                <Button variant="hero" size="lg" className="flex-[2]" disabled={busy} onClick={signBind}>
                   Sign & bind wallet →
                 </Button>
               </div>
@@ -391,11 +424,12 @@ function VerifyPage() {
                   variant="ghost"
                   size="lg"
                   className="flex-1"
+                  disabled={busy}
                   onClick={() => goStep(2)}
                 >
                   Back
                 </Button>
-                <Button variant="hero" size="lg" className="flex-[2]" onClick={skipAllToDashboard}>
+                <Button variant="hero" size="lg" className="flex-[2]" disabled={busy} onClick={skipAllToDashboard}>
                   Go to dashboard <ArrowRight className="size-4" />
                 </Button>
               </div>
